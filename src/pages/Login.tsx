@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import { useNavigate } from 'react-router-dom';
 
@@ -8,18 +8,26 @@ export function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isRegisterMode, setIsRegisterMode] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleAction = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      navigate('/admin');
+      if (isRegisterMode) {
+        await createUserWithEmailAndPassword(auth, 'owner@madhumithatex.com', password);
+        alert('Owner account created successfully! You can now log in.');
+        setIsRegisterMode(false);
+        setEmail('owner@madhumithatex.com');
+      } else {
+        await signInWithEmailAndPassword(auth, email, password);
+        navigate('/admin');
+      }
     } catch (err: any) {
-      setError(err.message || 'Failed to login');
+      setError(err.message || 'Failed to authenticate');
     } finally {
       setLoading(false);
     }
@@ -30,8 +38,14 @@ export function Login() {
       <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-sm border border-gray-100">
         <div className="text-center mb-8">
           <div className="w-12 h-12 bg-brand-black text-brand-white flex items-center justify-center rounded-sm font-semibold text-xl mx-auto mb-4">M</div>
-          <h1 className="text-2xl font-semibold text-brand-black">Admin Login</h1>
-          <p className="text-gray-500 mt-2 text-sm">Sign in to manage your catalogue</p>
+          <h1 className="text-2xl font-semibold text-brand-black">
+            {isRegisterMode ? 'Register Owner Account' : 'Admin Login'}
+          </h1>
+          <p className="text-gray-500 mt-2 text-sm">
+            {isRegisterMode 
+              ? 'Choose a secure password for owner@madhumithatex.com' 
+              : 'Sign in to manage your catalogue'}
+          </p>
         </div>
 
         {error && (
@@ -40,15 +54,16 @@ export function Login() {
           </div>
         )}
 
-        <form onSubmit={handleLogin} className="space-y-6">
+        <form onSubmit={handleAction} className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-brand-black mb-1">Email</label>
             <input 
               type="email" 
               required
-              value={email}
+              disabled={isRegisterMode}
+              value={isRegisterMode ? 'owner@madhumithatex.com' : email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-200 rounded-sm focus:outline-none focus:border-brand-black focus:ring-1 focus:ring-brand-black bg-brand-offwhite"
+              className="w-full px-4 py-2 border border-gray-200 rounded-sm focus:outline-none focus:border-brand-black focus:ring-1 focus:ring-brand-black bg-brand-offwhite disabled:opacity-75"
             />
           </div>
           <div>
@@ -66,9 +81,26 @@ export function Login() {
             disabled={loading}
             className="w-full py-3 bg-brand-black text-white rounded-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50"
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading 
+              ? (isRegisterMode ? 'Creating Account...' : 'Signing in...') 
+              : (isRegisterMode ? 'Create Owner Account' : 'Sign In')}
           </button>
         </form>
+
+        <div className="text-center mt-6">
+          <button 
+            onClick={() => {
+              setIsRegisterMode(!isRegisterMode);
+              setError('');
+              setPassword('');
+            }}
+            className="text-sm text-brand-gold hover:underline cursor-pointer"
+          >
+            {isRegisterMode 
+              ? 'Back to Sign In' 
+              : 'New Setup? Create the Owner account here'}
+          </button>
+        </div>
       </div>
     </div>
   );

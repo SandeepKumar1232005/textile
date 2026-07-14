@@ -29,3 +29,39 @@ body {
   }
 }
 
+/* Hero section — mobile-first height */
+.hero-section {
+  min-height: 70vh;
+  min-height: 70dvh; /* dynamic viewport height for mobile browsers */
+}
+
+@media (min-width: 768px) {
+  .hero-section {
+    min-height: 520px;
+  }
+}
+
+/* Hero heading — mobile-first sizing */
+.hero-heading {
+  font-size: 2.5rem; /* 40px on mobile — fits 2-3 lines */
+}
+
+@media (min-width: 768px) {
+  .hero-heading {
+    font-size: 3rem; /* 48px on desktop */
+  }
+}
+
+/* Mobile drawer animation */
+.mobile-drawer {
+  transform: translateY(-8px);
+  opacity: 0;
+  animation: drawer-slide-in 0.2s ease-out forwards;
+}
+
+@keyframes drawer-slide-in {
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}

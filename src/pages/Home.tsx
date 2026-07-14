@@ -45,7 +45,7 @@ export function Home() {
             <span className="text-[#B8912F] text-xs font-bold uppercase tracking-[0.3em] mb-4 block">Collection 2024</span>
             <h1 className="text-4xl md:text-5xl font-medium leading-[1.1] text-brand-black mb-6 tracking-tight">Style, Comfort & Quality in Every Thread</h1>
             <p className="text-[#4A4A4A] leading-relaxed mb-8 text-[15px] max-w-2xl">
-              Experience the finesse of authentic powerloom textiles. Our fabrics are woven with precision, merging traditional techniques with contemporary durability.
+              Discover premium bedsheets and home textiles crafted for everyday comfort. Quality materials, elegant designs, and lasting durability for every home.
             </p>
           </motion.div>
           <motion.div

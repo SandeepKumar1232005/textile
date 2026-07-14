@@ -34,7 +34,7 @@ export function Contact() {
                 icon: <MapPin className="w-5 h-5" />,
                 iconColor: 'text-[#B8912F]',
                 label: 'Our Location',
-                content: <p className="text-[14px] leading-relaxed text-[#4A4A4A]">123 Textile Market Road,<br />Erode, Tamil Nadu 638001</p>,
+                content: <p className="text-[14px] leading-relaxed text-[#4A4A4A]">256, J.J. Nagar, Karavalasu,<br />Vazhaithottam (Po), Sivagiri,<br />Erode - 638109</p>,
               },
               {
                 icon: <MessageCircle className="w-5 h-5" />,

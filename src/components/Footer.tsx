@@ -43,7 +43,7 @@ export function Footer() {
             <ul className="space-y-4 text-[13px] tracking-wider text-gray-400 uppercase">
               <li className="flex items-start gap-3">
                 <MapPin className="w-4 h-4 text-[#B8912F] shrink-0 mt-0.5" />
-                <span className="leading-relaxed">123 Textile Market Road,<br/>Erode, Tamil Nadu 638001</span>
+                <span className="leading-relaxed">256, J.J. Nagar, Karavalasu,<br/>Vazhaithottam (Po), Sivagiri,<br/>Erode - 638109</span>
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="w-4 h-4 text-[#B8912F] shrink-0" />

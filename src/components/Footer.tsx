@@ -55,10 +55,6 @@ export function Footer() {
         
         <div className="border-t border-gray-800 mt-12 pt-6 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-[11px] uppercase tracking-[0.2em] text-[#B8912F]">&copy; {new Date().getFullYear()} Madhumitha Tex.</p>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-[#25D366]"></div>
-            <span className="text-[11px] uppercase tracking-widest text-white">Active on WhatsApp</span>
-          </div>
         </div>
       </div>
     </footer>

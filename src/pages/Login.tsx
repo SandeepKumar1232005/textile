@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 
 export function Login() {
@@ -18,12 +17,20 @@ export function Login() {
     
     try {
       if (isRegisterMode) {
-        await createUserWithEmailAndPassword(auth, 'owner@madhumithatex.com', password);
-        alert('Owner account created successfully! You can now log in.');
+        const { error: signUpError } = await supabase.auth.signUp({
+          email: 'owner@madhumithatex.com',
+          password: password,
+        });
+        if (signUpError) throw signUpError;
+        alert('Owner account registration initiated! You can now log in.');
         setIsRegisterMode(false);
         setEmail('owner@madhumithatex.com');
       } else {
-        await signInWithEmailAndPassword(auth, email, password);
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: email,
+          password: password,
+        });
+        if (signInError) throw signInError;
         navigate('/admin');
       }
     } catch (err: any) {

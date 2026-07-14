@@ -1,5 +1,3 @@
-import { Timestamp } from 'firebase/firestore';
-
 export interface Product {
   id: string;
   name: string;              // e.g. type of fabric
@@ -12,6 +10,6 @@ export interface Product {
   stockStatus: "in_stock" | "limited" | "out_of_stock";
   quantity?: number;         // optional
   ownerPhone: string;        // WhatsApp order number
-  createdAt: Timestamp | Date | number;
-  updatedAt: Timestamp | Date | number;
+  createdAt: Date | string | number;
+  updatedAt: Date | string | number;
 }

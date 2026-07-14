@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { getProducts, createProduct, updateProduct, deleteProduct } from '../lib/store';
 import { Product } from '../types';
-import { auth } from '../lib/firebase';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { supabase } from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, X, Image as ImageIcon, LogOut, Sparkles } from 'lucide-react';
 import { formatPrice, resizeImageFile } from '../lib/utils';
@@ -10,7 +9,7 @@ import { formatPrice, resizeImageFile } from '../lib/utils';
 export function Admin() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(auth.currentUser);
+  const [user, setUser] = useState<any>(null);
   const navigate = useNavigate();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -19,19 +18,34 @@ export function Admin() {
   const [aiParsing, setAiParsing] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (!currentUser) {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
         navigate('/login');
-      } else if (currentUser.email !== 'owner@madhumithatex.com') {
-        signOut(auth);
+      } else if (session.user.email !== 'owner@madhumithatex.com') {
+        supabase.auth.signOut();
         navigate('/login');
         alert('Access denied: Only the owner account can manage products.');
       } else {
-        setUser(currentUser);
+        setUser(session.user);
         loadProducts();
       }
     });
-    return unsubscribe;
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        navigate('/login');
+      } else if (session.user.email !== 'owner@madhumithatex.com') {
+        supabase.auth.signOut();
+        navigate('/login');
+        alert('Access denied: Only the owner account can manage products.');
+      } else {
+        setUser(session.user);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [navigate]);
 
   async function loadProducts() {
@@ -47,7 +61,7 @@ export function Admin() {
   }
 
   const handleLogout = async () => {
-    await signOut(auth);
+    await supabase.auth.signOut();
     navigate('/');
   };
 

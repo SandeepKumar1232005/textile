@@ -128,6 +128,12 @@ export function ProductDetail() {
                 <span className="text-gray-500 uppercase tracking-wider font-medium">Material</span>
                 <span className="col-span-2 text-brand-black">{product.material || '-'}</span>
               </div>
+              {product.size && (
+                <div className="grid grid-cols-3 py-4 border-b border-[#EAEAEA]">
+                  <span className="text-gray-500 uppercase tracking-wider font-medium">Size</span>
+                  <span className="col-span-2 text-brand-black">{product.size}</span>
+                </div>
+              )}
               <div className="grid grid-cols-3 py-4 border-b border-[#EAEAEA] items-center">
                 <span className="text-gray-500 uppercase tracking-wider font-medium">Availability</span>
                 <span className="col-span-2">

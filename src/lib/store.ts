@@ -16,6 +16,7 @@ function mapProductFromDb(data: any): Product {
     images: data.images || [],
     stockStatus: data.stock_status,
     ownerPhone: data.owner_phone,
+    size: data.size || '',
     createdAt: new Date(data.created_at),
     updatedAt: new Date(data.updated_at),
   };
@@ -33,6 +34,7 @@ function mapProductToDb(product: any) {
   if (product.images !== undefined) data.images = product.images;
   if (product.stockStatus !== undefined) data.stock_status = product.stockStatus;
   if (product.ownerPhone !== undefined) data.owner_phone = product.ownerPhone;
+  if (product.size !== undefined) data.size = product.size;
   return data;
 }
 

@@ -196,6 +196,7 @@ Please extract the following details from it, if present. Respond ONLY with a va
   "ownerPhone": "string (Phone/WhatsApp contact number, e.g. '9952319263' or '+919952319263')",
   "category": "string (Must be exactly one of: ${categories.map(c => `'${c}'`).join(', ')})",
   "material": "string (e.g. 'Cotton', 'Silk', etc.)",
+  "size": "string (e.g. 'Double Bedsheet (90x100 inches)', '6.3m', etc. if present)",
   "description": "string (A brief 1-2 sentence description summarizing the product details)"
 }
 Return only the raw JSON. Do not write markdown, code blocks (such as \`\`\`json), or explanations.`
@@ -229,6 +230,7 @@ Return only the raw JSON. Do not write markdown, code blocks (such as \`\`\`json
           ? data.category 
           : prev?.category || categories[0] || 'Bedsheets',
         material: data.material || prev?.material || '',
+        size: data.size || prev?.size || '',
         description: data.description || prev?.description || '',
         images: [...(prev?.images || []), base64Image]
       }));
@@ -490,6 +492,16 @@ Return only the raw JSON. Do not write markdown, code blocks (such as \`\`\`json
                     type="text" placeholder="e.g. 100% Cotton"
                     value={currentProduct?.material || ''}
                     onChange={e => setCurrentProduct({...currentProduct, material: e.target.value})}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-sm focus:outline-none focus:border-brand-black"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-brand-black mb-1">Size</label>
+                  <input 
+                    type="text" placeholder="e.g. Double Bedsheet (90x100 inches), 6.3m (Saree)"
+                    value={currentProduct?.size || ''}
+                    onChange={e => setCurrentProduct({...currentProduct, size: e.target.value})}
                     className="w-full px-4 py-2 border border-gray-200 rounded-sm focus:outline-none focus:border-brand-black"
                   />
                 </div>

@@ -10,6 +10,7 @@ export interface Product {
   stockStatus: "in_stock" | "limited" | "out_of_stock";
   quantity?: number;         // optional
   ownerPhone: string;        // WhatsApp order number
+  size?: string;             // e.g. "Double", "6x7 feet", "Standard Saree Size"
   createdAt: Date | string | number;
   updatedAt: Date | string | number;
 }

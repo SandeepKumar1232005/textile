@@ -92,12 +92,14 @@ export async function deleteProduct(id: string): Promise<void> {
 }
 
 export function buildWhatsAppLink(product: Product, ownerPhone: string) {
+  const productLink = `${window.location.origin}/product/${product.id}`;
   const message = `Hello Madhumitha Tex,
 I am interested in this product.
 
 Product: ${product.name}
 Color: ${product.colorCombination}
 Price: ₹${product.price}
+Link: ${productLink}
 
 Please share more details.`;
 

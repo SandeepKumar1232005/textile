@@ -6,17 +6,9 @@ import { getProducts, getCategories } from '../lib/store';
 import { Product } from '../types';
 import { formatPrice } from '../lib/utils';
 
-function getCategoryEmoji(categoryName: string): string {
-  const lower = categoryName.toLowerCase();
-  if (lower.includes('bedsheet')) return '🛏';
-  if (lower.includes('saree')) return '👗';
-  if (lower.includes('blanket')) return '🧺';
-  if (lower.includes('towel')) return '🛁';
-  return '📦';
-}
-
 export function Home() {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -28,6 +20,7 @@ export function Home() {
           getCategories()
         ]);
         setFeaturedProducts(productsData.slice(0, 4));
+        setAllProducts(productsData);
         setCategories(categoriesData);
       } catch (err) {
         console.error(err);
@@ -168,23 +161,32 @@ export function Home() {
         <div className="max-w-7xl mx-auto">
           <h2 className="text-2xl font-medium text-brand-black mb-8 text-center tracking-tight">Browse by Category</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {categories.map((category, index) => (
-              <motion.div
-                key={category}
-                initial={{ opacity: 0, y: 12 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-50px' }}
-                transition={{ duration: 0.35, delay: index * 0.06, ease: 'easeOut' }}
-              >
-                <Link 
-                  to={`/products?category=${category}`}
-                  className="block bg-white p-6 border border-[#EAEAEA] text-center hover:border-brand-gold transition-colors"
+            {categories.map((category, index) => {
+              const hasProducts = allProducts.some(p => p.category === category);
+              return (
+                <motion.div
+                  key={category}
+                  initial={{ opacity: 0, y: 12 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-50px' }}
+                  transition={{ duration: 0.35, delay: index * 0.06, ease: 'easeOut' }}
                 >
-                  <span className="text-3xl mb-2 block">{getCategoryEmoji(category)}</span>
-                  <h3 className="font-medium text-brand-black uppercase tracking-wider text-sm">{category}</h3>
-                </Link>
-              </motion.div>
-            ))}
+                  {hasProducts ? (
+                    <Link 
+                      to={`/products?category=${category}`}
+                      className="block bg-white py-8 px-6 border border-[#EAEAEA] text-center hover:border-brand-gold transition-colors"
+                    >
+                      <h3 className="font-semibold text-brand-black uppercase tracking-wider text-sm">{category}</h3>
+                    </Link>
+                  ) : (
+                    <div className="bg-white py-8 px-6 border border-[#EAEAEA] text-center relative opacity-80">
+                      <h3 className="font-medium text-gray-400 uppercase tracking-wider text-sm mb-1">{category}</h3>
+                      <span className="text-[10px] text-brand-gold font-bold uppercase tracking-widest block">Coming Soon</span>
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </motion.section>

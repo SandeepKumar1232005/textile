@@ -157,8 +157,14 @@ export function Products() {
       ) : (
         <div className="text-center py-20 bg-[#FAFAF8] border border-[#EAEAEA]">
           <img src="/logo.png" alt="Madhumitha Tex Logo" className="w-16 h-16 object-contain mx-auto mb-6 rounded-sm grayscale opacity-50" />
-          <h3 className="text-xl font-medium text-brand-black mb-2">No products found</h3>
-          <p className="text-gray-500 max-w-sm mx-auto">We couldn't find any products matching your current filters. Try adjusting your search or category.</p>
+          <h3 className="text-xl font-medium text-brand-black mb-2">
+            {selectedCategory ? `${selectedCategory} Collection Coming Soon` : 'No products found'}
+          </h3>
+          <p className="text-gray-500 max-w-sm mx-auto">
+            {selectedCategory 
+              ? 'We are currently weaving fabrics for this collection. Please check back soon!'
+              : "We couldn't find any products matching your current filters. Try adjusting your search or category."}
+          </p>
           <button 
             onClick={() => { setSearchTerm(''); setSelectedCategory(''); setSortBy(''); }}
             className="mt-6 px-8 py-3 bg-brand-black text-white font-medium hover:bg-gray-800 transition-colors uppercase tracking-wide text-sm"

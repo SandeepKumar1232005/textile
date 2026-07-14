@@ -87,7 +87,7 @@ export function ProductDetail() {
                 <img 
                   src={product.images[activeImage]} 
                   alt={product.name} 
-                  className="w-full h-full object-cover transition-transform duration-500 ease-out hover:scale-[1.04]"
+                  className="w-full h-full object-contain transition-transform duration-500 ease-out hover:scale-[1.04]"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-gray-300">No Image Available</div>
@@ -197,7 +197,7 @@ export function ProductDetail() {
                         <img 
                           src={p.images[0]} 
                           alt={p.name} 
-                          className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06]"
+                          className="w-full h-full object-contain transition-transform duration-500 ease-out group-hover:scale-[1.06]"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-300">No Image</div>

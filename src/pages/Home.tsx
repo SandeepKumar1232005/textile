@@ -125,7 +125,7 @@ export function Home() {
                       <img 
                         src={product.images[0]} 
                         alt={product.name} 
-                        className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06]"
+                        className="w-full h-full object-contain transition-transform duration-500 ease-out group-hover:scale-[1.06]"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-300 bg-[#FAFAF8]">No Image</div>

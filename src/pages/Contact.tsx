@@ -105,11 +105,11 @@ export function Contact() {
           transition={{ duration: 0.45, ease: 'easeOut', delay: 0.1 }}
         >
           <iframe 
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1m3!1m2!1s0x3ba9a6f3b06297e5%3A0xc0fb1f2c253d7125!2sErode%2C%20Tamil%20Nadu!5e0!3m2!1sen!2sin!4v1715000000000!5m2!1sen!2sin" 
+            src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d15661.514210411593!2d77.7672619!3d11.0851387!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ba98290fc72fc01%3A0xa3a819103454485!2sKaravalasu!5e0!3m2!1sen!2sin!4v1784014967906!5m2!1sen!2sin" 
             className="absolute inset-0 w-full h-full border-0 grayscale opacity-90 mix-blend-multiply" 
-            allowFullScreen={false} 
+            allowFullScreen={true} 
             loading="lazy" 
-            referrerPolicy="no-referrer-when-downgrade"
+            referrerPolicy="strict-origin-when-cross-origin"
             title="Google Map Location"
           ></iframe>
         </motion.div>

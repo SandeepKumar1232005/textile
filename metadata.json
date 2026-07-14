@@ -1,0 +1,6 @@
+{
+  "name": "Madhumitha Tex",
+  "description": "WhatsApp-driven textile catalogue website for Madhumitha Tex.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

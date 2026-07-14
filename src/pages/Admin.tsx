@@ -188,7 +188,7 @@ Return only the raw JSON. Do not write markdown, code blocks (such as \`\`\`json
         name: data.name || prev?.name || '',
         colorCombination: data.colorCombination || prev?.colorCombination || '',
         price: typeof data.price === 'number' ? data.price : Number(data.price) || prev?.price || 0,
-        ownerPhone: data.ownerPhone || prev?.ownerPhone || '+919876543210',
+        ownerPhone: data.ownerPhone || prev?.ownerPhone || '+919952319263',
         category: ['Powerloom', 'Cotton', 'Printed', 'Saree', 'Dress Material'].includes(data.category) 
           ? data.category 
           : prev?.category || 'Powerloom',
@@ -237,7 +237,7 @@ Return only the raw JSON. Do not write markdown, code blocks (such as \`\`\`json
                     category: 'Powerloom',
                     stockStatus: 'in_stock',
                     images: [],
-                    ownerPhone: '+919876543210' // Default
+                    ownerPhone: '+919952319263' // Default
                   });
                   setIsEditing(true);
                 }}
@@ -424,7 +424,7 @@ Return only the raw JSON. Do not write markdown, code blocks (such as \`\`\`json
                   <label className="block text-sm font-medium text-brand-black mb-1">WhatsApp Order Number</label>
                   <input 
                     type="text" required
-                    value={currentProduct?.ownerPhone || '+919876543210'}
+                    value={currentProduct?.ownerPhone || '+919952319263'}
                     onChange={e => setCurrentProduct({...currentProduct, ownerPhone: e.target.value})}
                     className="w-full px-4 py-2 border border-gray-200 rounded-sm focus:outline-none focus:border-brand-black"
                   />

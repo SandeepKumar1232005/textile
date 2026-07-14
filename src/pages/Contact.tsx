@@ -1,4 +1,4 @@
-import { Phone, MapPin, Mail, Instagram, MessageCircle } from 'lucide-react';
+import { Phone, MapPin, Mail, Instagram, MessageCircle, Facebook } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export function Contact() {
@@ -42,7 +42,7 @@ export function Contact() {
                 label: 'WhatsApp Us',
                 content: (
                   <>
-                    <a href="https://wa.me/919876543210" target="_blank" rel="noopener noreferrer" className="text-[14px] text-brand-black font-medium hover:text-[#25D366] transition-colors inline-block mb-1">+91 98765 43210</a>
+                    <a href="https://wa.me/919952319263" target="_blank" rel="noopener noreferrer" className="text-[14px] text-brand-black font-medium hover:text-[#25D366] transition-colors inline-block mb-1">+91 99523 19263</a>
                     <p className="text-[11px] text-gray-500 uppercase tracking-wider">Fastest response time</p>
                   </>
                 ),
@@ -53,16 +53,28 @@ export function Contact() {
                 label: 'Call Us',
                 content: (
                   <>
-                    <a href="tel:+919876543210" className="text-[14px] text-brand-black font-medium hover:text-[#B8912F] transition-colors inline-block mb-1">+91 98765 43210</a>
+                    <a href="tel:+919952319263" className="text-[14px] text-brand-black font-medium hover:text-[#B8912F] transition-colors inline-block mb-1">+91 99523 19263</a>
                     <p className="text-[11px] text-gray-500 uppercase tracking-wider">Mon-Sat, 9AM to 8PM</p>
                   </>
                 ),
+              },
+              {
+                icon: <Mail className="w-5 h-5" />,
+                iconColor: 'text-brand-black',
+                label: 'Email Us',
+                content: <a href="mailto:owner@madhumithatex.com" className="text-[14px] text-brand-black font-medium hover:text-[#B8912F] transition-colors">owner@madhumithatex.com</a>,
               },
               {
                 icon: <Instagram className="w-5 h-5" />,
                 iconColor: 'text-brand-black',
                 label: 'Follow Us',
                 content: <a href="https://www.instagram.com/madhumitha_tex_?igsh=N3dnbGxyamEzcTQy" target="_blank" rel="noopener noreferrer" className="text-[14px] text-brand-black font-medium hover:text-[#B8912F] transition-colors">@madhumitha_tex_</a>,
+              },
+              {
+                icon: <Facebook className="w-5 h-5" />,
+                iconColor: 'text-brand-black',
+                label: 'Facebook',
+                content: <a href="https://www.facebook.com/share/19L9HeFonC/" target="_blank" rel="noopener noreferrer" className="text-[14px] text-brand-black font-medium hover:text-[#B8912F] transition-colors">Madhumitha Tex</a>,
               },
             ].map((item, index) => (
               <motion.div

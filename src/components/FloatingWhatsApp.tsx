@@ -1,7 +1,7 @@
 export function FloatingWhatsApp() {
   const genericMessage = "Hello Madhumitha Tex, I have an inquiry.";
   // Note: normally you'd put the real phone number here.
-  const phone = "919876543210"; 
+  const phone = "919952319263"; 
   const link = `https://wa.me/${phone}?text=${encodeURIComponent(genericMessage)}`;
 
   return (

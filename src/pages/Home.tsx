@@ -54,7 +54,7 @@ export function Home() {
               Browse Full Collection
             </Link>
             <a 
-              href="https://wa.me/919876543210?text=Hello%20Madhumitha%20Tex,%20I%20would%20like%20to%20know%20more%20about%20your%20fabrics."
+              href="https://wa.me/919952319263?text=Hello%20Madhumitha%20Tex,%20I%20would%20like%20to%20know%20more%20about%20your%20fabrics."
               target="_blank"
               rel="noopener noreferrer"
               className="w-full sm:w-auto border border-[#25D366] text-[#25D366] px-8 py-4 text-sm font-medium tracking-wide uppercase flex items-center justify-center gap-2 hover:bg-[#25D366] hover:text-white transition-all"

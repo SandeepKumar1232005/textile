@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Phone, MapPin, Instagram } from 'lucide-react';
+import { Phone, MapPin, Instagram, Facebook, Mail } from 'lucide-react';
 
 export function Footer() {
   return (
@@ -15,8 +15,14 @@ export function Footer() {
               </div>
             </div>
             <div className="flex gap-4 mt-6">
-              <a href="https://www.instagram.com/madhumitha_tex_?igsh=N3dnbGxyamEzcTQy" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-[#B8912F] transition-colors">
+              <a href="https://www.instagram.com/madhumitha_tex_?igsh=N3dnbGxyamEzcTQy" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-[#B8912F] transition-colors" title="Instagram">
                 <Instagram className="w-5 h-5" />
+              </a>
+              <a href="https://www.facebook.com/share/19L9HeFonC/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-[#B8912F] transition-colors" title="Facebook">
+                <Facebook className="w-5 h-5" />
+              </a>
+              <a href="mailto:owner@madhumithatex.com" className="text-gray-400 hover:text-[#B8912F] transition-colors" title="Email">
+                <Mail className="w-5 h-5" />
               </a>
             </div>
           </div>
@@ -41,7 +47,7 @@ export function Footer() {
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="w-4 h-4 text-[#B8912F] shrink-0" />
-                <a href="tel:+919876543210" className="hover:text-white transition-colors">+91 98765 43210</a>
+                <a href="tel:+919952319263" className="hover:text-white transition-colors">+91 99523 19263</a>
               </li>
             </ul>
           </div>

@@ -504,6 +504,25 @@ Return only the raw JSON. Do not write markdown, code blocks (such as \`\`\`json
                     onChange={e => setCurrentProduct({...currentProduct, size: e.target.value})}
                     className="w-full px-4 py-2 border border-gray-200 rounded-sm focus:outline-none focus:border-brand-black"
                   />
+                  {currentProduct?.category === 'Bedsheets' && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {[
+                        'Single (60 × 90 inches)',
+                        'Double (90 × 100 inches)',
+                        'Queen (90 × 108 inches)',
+                        'King (108 × 108 inches)'
+                      ].map(sz => (
+                        <button
+                          key={sz}
+                          type="button"
+                          onClick={() => setCurrentProduct({...currentProduct, size: sz})}
+                          className={`px-2 py-1 text-[10px] border font-medium rounded-sm transition-colors ${currentProduct.size === sz ? 'bg-brand-black text-white border-brand-black' : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'}`}
+                        >
+                          {sz}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div>

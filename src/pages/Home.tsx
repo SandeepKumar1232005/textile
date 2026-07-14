@@ -112,13 +112,28 @@ export function Home() {
                 >
                   <div className="aspect-[4/5] bg-[#FAFAF8] border border-[#EAEAEA] mb-4 relative overflow-hidden flex items-center justify-center text-gray-300">
                     {product.stockStatus === 'limited' && (
-                      <div className="absolute top-4 right-4 bg-[#6E1F2B] text-white px-3 py-1 text-[10px] font-bold uppercase tracking-widest z-10">Limited</div>
+                      <div 
+                        style={{ color: '#ffffff', backgroundColor: '#6E1F2B' }}
+                        className="absolute top-4 right-4 px-3 py-1 text-[10px] font-bold uppercase tracking-widest z-10"
+                      >
+                        Limited
+                      </div>
                     )}
                     {product.stockStatus === 'in_stock' && (
-                      <div className="absolute top-4 left-4 bg-green-50 text-green-800 border border-green-200 px-3 py-1 text-[10px] font-bold uppercase tracking-widest z-10">In Stock</div>
+                      <div 
+                        style={{ color: '#166534', backgroundColor: '#f0fdf4', borderColor: '#bbf7d0', borderWidth: '1px', borderStyle: 'solid' }}
+                        className="absolute top-4 left-4 px-3 py-1 text-[10px] font-bold uppercase tracking-widest z-10"
+                      >
+                        In Stock
+                      </div>
                     )}
                     {product.stockStatus === 'out_of_stock' && (
-                      <div className="absolute top-4 left-4 bg-gray-100 text-gray-500 border border-gray-200 px-3 py-1 text-[10px] font-bold uppercase tracking-widest z-10">Sold Out</div>
+                      <div 
+                        style={{ color: '#4b5563', backgroundColor: '#f3f4f6', borderColor: '#e5e7eb', borderWidth: '1px', borderStyle: 'solid' }}
+                        className="absolute top-4 left-4 px-3 py-1 text-[10px] font-bold uppercase tracking-widest z-10"
+                      >
+                        Sold Out
+                      </div>
                     )}
 
                     {product.images && product.images[0] ? (

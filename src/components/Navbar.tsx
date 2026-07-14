@@ -21,7 +21,7 @@ export function Navbar() {
 
           <div className="hidden md:flex items-center space-x-8 text-[13px] font-medium uppercase tracking-wider">
             <Link to="/" className="text-brand-black hover:text-brand-maroon transition-colors">Home</Link>
-            <Link to="/products" className="text-brand-black hover:text-brand-maroon transition-colors">Catalogue</Link>
+            <Link to="/products" className="text-brand-black hover:text-brand-maroon transition-colors">Collection</Link>
             <Link to="/about" className="text-brand-black hover:text-brand-maroon transition-colors">About Us</Link>
             <Link to="/contact" className="text-brand-black hover:text-brand-maroon transition-colors">Contact</Link>
           </div>
@@ -56,7 +56,7 @@ export function Navbar() {
               onClick={() => setIsOpen(false)}
               className="block px-3 py-3 text-[13px] font-medium uppercase tracking-wider text-brand-black hover:bg-gray-50"
             >
-              Catalogue
+              Collection
             </Link>
             <Link 
               to="/about" 

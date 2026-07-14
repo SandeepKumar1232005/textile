@@ -45,7 +45,7 @@ export function About() {
           <div className="bg-[#FAFAF8] p-10 border border-[#EAEAEA]">
             <h3 className="text-[10px] text-[#B8912F] font-bold mb-4 uppercase tracking-[0.2em]">Direct to You</h3>
             <p className="text-[14px] leading-relaxed text-[#4A4A4A]">
-              By cutting out unnecessary middlemen, we offer factory-direct pricing without compromising on quality. This digital catalogue is designed to make it easy for you to view our latest collections and reach out to us directly on WhatsApp.
+              By cutting out unnecessary middlemen, we offer factory-direct pricing without compromising on quality. This digital collection is designed to make it easy for you to view our latest collections and reach out to us directly on WhatsApp.
             </p>
           </div>
         </motion.section>

@@ -62,7 +62,7 @@ export function Contact() {
                 icon: <Instagram className="w-5 h-5" />,
                 iconColor: 'text-brand-black',
                 label: 'Follow Us',
-                content: <a href="#" className="text-[14px] text-brand-black font-medium hover:text-[#B8912F] transition-colors">@madhumitha.tex</a>,
+                content: <a href="https://www.instagram.com/madhumitha_tex_?igsh=N3dnbGxyamEzcTQy" target="_blank" rel="noopener noreferrer" className="text-[14px] text-brand-black font-medium hover:text-[#B8912F] transition-colors">@madhumitha_tex_</a>,
               },
             ].map((item, index) => (
               <motion.div

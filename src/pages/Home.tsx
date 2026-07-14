@@ -39,7 +39,7 @@ export function Home() {
         style={{ backgroundImage: "url('/hero-bg.png')" }}
       >
         {/* Overlay for text readability */}
-        <div className="absolute inset-0 bg-white/40 md:bg-white/15 z-0"></div>
+        <div className="absolute inset-0 bg-white/50 md:bg-white/20 z-0"></div>
 
         <div className="relative max-w-7xl mx-auto w-full z-10 px-6 md:px-10 py-14 md:py-32">
           <div className="max-w-xl md:max-w-2xl">
@@ -50,7 +50,7 @@ export function Home() {
               transition={{ duration: 0.5, ease: 'easeOut' }}
             >
               <span className="text-[#B8912F] text-[10px] md:text-xs font-bold uppercase tracking-[0.25em] md:tracking-[0.3em] mb-3 md:mb-4 block">Collection 2024</span>
-              <h1 className="hero-heading font-semibold leading-[1.15] text-brand-black mb-4 md:mb-6 tracking-tight">Style, Comfort & Quality in Every Thread</h1>
+              <h1 className="hero-heading font-semibold leading-[1.15] text-brand-black mb-4 md:mb-6 tracking-tight">Style & Comfort for Every Home</h1>
               <p className="text-[#4A4A4A] leading-[1.6] mb-6 md:mb-8 text-[15px] md:text-[15px] max-w-md md:max-w-lg font-medium">
                 Discover premium bedsheets and home textiles crafted for everyday comfort. Quality materials, elegant designs, and lasting durability for every home.
               </p>

@@ -11,7 +11,7 @@ export function Footer() {
               <img src="/logo.png" alt="Madhumitha Tex Logo" className="w-10 h-10 object-contain rounded-sm" />
               <div className="flex flex-col">
                 <span className="text-xl font-semibold tracking-wide uppercase leading-none text-white">Madhumitha Tex</span>
-                <span className="text-[10px] tracking-[0.2em] text-[#B8912F] font-medium uppercase mt-2">Quality Powerloom Fabrics</span>
+                <span className="text-[10px] tracking-[0.2em] text-[#B8912F] font-medium uppercase mt-2">Quality Home Textiles</span>
               </div>
             </div>
             <div className="flex gap-4 mt-6">

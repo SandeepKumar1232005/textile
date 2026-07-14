@@ -14,7 +14,7 @@ export function Navbar() {
               <img src="/logo.png" alt="Madhumitha Tex Logo" className="w-8 h-8 md:w-10 md:h-10 object-contain rounded-sm bg-black" />
               <div className="flex flex-col">
                 <span className="text-base md:text-xl font-semibold tracking-wide uppercase leading-none text-brand-black">Madhumitha Tex</span>
-                <span className="text-[9px] md:text-[10px] tracking-[0.15em] md:tracking-[0.2em] text-[#B8912F] font-medium uppercase mt-0.5 md:mt-1">Quality Powerloom Fabrics</span>
+                <span className="text-[9px] md:text-[10px] tracking-[0.15em] md:tracking-[0.2em] text-[#B8912F] font-medium uppercase mt-0.5 md:mt-1">Quality Home Textiles</span>
               </div>
             </Link>
           </div>

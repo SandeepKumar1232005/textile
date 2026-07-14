@@ -20,6 +20,7 @@ export function Navbar() {
           </div>
 
           <div className="hidden md:flex items-center space-x-8 text-[13px] font-medium uppercase tracking-wider">
+            <Link to="/" className="text-brand-black hover:text-brand-maroon transition-colors">Home</Link>
             <Link to="/products" className="text-brand-black hover:text-brand-maroon transition-colors">Catalogue</Link>
             <Link to="/about" className="text-brand-black hover:text-brand-maroon transition-colors">About Us</Link>
             <Link to="/contact" className="text-brand-black hover:text-brand-maroon transition-colors">Contact</Link>
@@ -43,6 +44,13 @@ export function Navbar() {
       {isOpen && (
         <div className="md:hidden border-t border-[#EAEAEA] bg-white">
           <div className="px-4 pt-2 pb-4 space-y-1">
+            <Link 
+              to="/" 
+              onClick={() => setIsOpen(false)}
+              className="block px-3 py-3 text-[13px] font-medium uppercase tracking-wider text-brand-black hover:bg-gray-50"
+            >
+              Home
+            </Link>
             <Link 
               to="/products" 
               onClick={() => setIsOpen(false)}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { motion } from 'motion/react';
 import { getProduct, getProducts, buildWhatsAppLink } from '../lib/store';
 import { Product } from '../types';
 import { formatPrice } from '../lib/utils';
@@ -75,13 +76,18 @@ export function ProductDetail() {
       <div className="max-w-7xl mx-auto px-4 sm:px-10 py-10">
         <div className="grid md:grid-cols-2 gap-8 lg:gap-16">
           {/* Images */}
-          <div className="space-y-4">
-            <div className="aspect-[4/5] bg-[#FAFAF8] border border-[#EAEAEA] relative flex items-center justify-center text-gray-300">
+          <motion.div
+            className="space-y-4"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+          >
+            <div className="aspect-[4/5] bg-[#FAFAF8] border border-[#EAEAEA] relative overflow-hidden flex items-center justify-center text-gray-300">
               {product.images && product.images[activeImage] ? (
                 <img 
                   src={product.images[activeImage]} 
                   alt={product.name} 
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover transition-transform duration-500 ease-out hover:scale-[1.04]"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-gray-300">No Image Available</div>
@@ -100,10 +106,15 @@ export function ProductDetail() {
                 ))}
               </div>
             )}
-          </div>
+          </motion.div>
 
           {/* Details */}
-          <div className="pt-2 md:pt-8 flex flex-col">
+          <motion.div
+            className="pt-2 md:pt-8 flex flex-col"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: 'easeOut', delay: 0.1 }}
+          >
             <div className="text-[10px] text-[#B8912F] font-bold mb-4 uppercase tracking-[0.2em]">{product.category}</div>
             <h1 className="text-3xl md:text-4xl font-medium text-brand-black mb-4 leading-[1.1] tracking-tight">{product.name}</h1>
             <div className="text-2xl font-semibold text-[#6E1F2B] mb-8">{formatPrice(product.price)}</div>
@@ -149,41 +160,54 @@ export function ProductDetail() {
                 <Phone className="w-4 h-4" /> Call Now
               </a>
             </div>
-          </div>
+          </motion.div>
         </div>
 
         {/* Related Products */}
         {relatedProducts.length > 0 && (
-          <div className="mt-24 pt-12 border-t border-[#EAEAEA]">
+          <motion.div
+            className="mt-24 pt-12 border-t border-[#EAEAEA]"
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-80px' }}
+            transition={{ duration: 0.45, ease: 'easeOut' }}
+          >
             <h2 className="text-2xl font-medium tracking-tight text-brand-black mb-8">Related Products</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              {relatedProducts.map(p => (
-                <Link 
-                  key={p.id} 
-                  to={`/product/${p.id}`}
-                  className="group block cursor-pointer"
+              {relatedProducts.map((p, index) => (
+                <motion.div
+                  key={p.id}
+                  initial={{ opacity: 0, y: 12 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-40px' }}
+                  transition={{ duration: 0.35, delay: Math.min(index, 4) * 0.06, ease: 'easeOut' }}
                 >
-                  <div className="aspect-[4/5] bg-[#FAFAF8] border border-[#EAEAEA] mb-4 relative flex items-center justify-center text-gray-300">
-                    {p.images && p.images[0] ? (
-                      <img 
-                        src={p.images[0]} 
-                        alt={p.name} 
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-300">No Image</div>
-                    )}
-                  </div>
-                  <div>
-                    <div className="flex justify-between items-start mb-1">
-                      <h3 className="font-medium text-brand-black line-clamp-1">{p.name}</h3>
-                      <span className="text-[#6E1F2B] font-semibold">{formatPrice(p.price)}</span>
+                  <Link 
+                    to={`/product/${p.id}`}
+                    className="group block cursor-pointer"
+                  >
+                    <div className="aspect-[4/5] bg-[#FAFAF8] border border-[#EAEAEA] mb-4 relative overflow-hidden flex items-center justify-center text-gray-300">
+                      {p.images && p.images[0] ? (
+                        <img 
+                          src={p.images[0]} 
+                          alt={p.name} 
+                          className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06]"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-300">No Image</div>
+                      )}
                     </div>
-                  </div>
-                </Link>
+                    <div>
+                      <div className="flex justify-between items-start mb-1">
+                        <h3 className="font-medium text-brand-black line-clamp-1">{p.name}</h3>
+                        <span className="text-[#6E1F2B] font-semibold">{formatPrice(p.price)}</span>
+                      </div>
+                    </div>
+                  </Link>
+                </motion.div>
               ))}
             </div>
-          </div>
+          </motion.div>
         )}
       </div>
     </div>

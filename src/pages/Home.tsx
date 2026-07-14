@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, MessageCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { motion } from 'motion/react';
 import { getProducts } from '../lib/store';
 import { Product } from '../types';
 import { formatPrice } from '../lib/utils';
@@ -28,14 +29,24 @@ export function Home() {
       {/* Hero Section */}
       <section className="bg-[#FAFAF8] py-20 px-4 border-b border-[#EAEAEA]">
         <div className="max-w-4xl mx-auto flex flex-col justify-between">
-          <div className="mb-4">
+          <motion.div
+            className="mb-4"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, ease: 'easeOut' }}
+          >
             <span className="text-[#B8912F] text-xs font-bold uppercase tracking-[0.3em] mb-4 block">Collection 2024</span>
             <h1 className="text-4xl md:text-5xl font-medium leading-[1.1] text-brand-black mb-6 tracking-tight">Handcrafted Quality for the Modern Home.</h1>
             <p className="text-[#4A4A4A] leading-relaxed mb-8 text-[15px] max-w-2xl">
               Experience the finesse of authentic powerloom textiles. Our fabrics are woven with precision, merging traditional techniques with contemporary durability.
             </p>
-          </div>
-          <div className="flex flex-col sm:flex-row items-start gap-3">
+          </motion.div>
+          <motion.div
+            className="flex flex-col sm:flex-row items-start gap-3"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: 'easeOut', delay: 0.15 }}
+          >
             <Link 
               to="/products" 
               className="w-full sm:w-auto bg-[#6E1F2B] text-white px-8 py-4 text-sm font-medium tracking-wide uppercase flex items-center justify-center hover:opacity-90 transition-opacity"
@@ -53,12 +64,18 @@ export function Home() {
               </svg>
               Chat on WhatsApp
             </a>
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* Featured Products */}
-      <section className="py-16 px-4 max-w-7xl mx-auto w-full bg-white">
+      <motion.section
+        className="py-16 px-4 max-w-7xl mx-auto w-full bg-white"
+        initial={{ opacity: 0, y: 16 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-80px' }}
+        transition={{ duration: 0.45, ease: 'easeOut' }}
+      >
         <div className="flex items-baseline justify-between mb-8">
           <h2 className="text-2xl font-medium tracking-tight text-brand-black">Featured Collection</h2>
           <Link to="/products" className="text-xs font-semibold text-[#B8912F] underline underline-offset-4 transition-colors hover:text-brand-black">
@@ -74,41 +91,48 @@ export function Home() {
           </div>
         ) : featuredProducts.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {featuredProducts.map(product => (
-              <Link 
-                key={product.id} 
-                to={`/product/${product.id}`}
-                className="group block cursor-pointer"
+            {featuredProducts.map((product, index) => (
+              <motion.div
+                key={product.id}
+                initial={{ opacity: 0, x: 24 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, margin: '-50px' }}
+                transition={{ duration: 0.4, delay: Math.min(index, 6) * 0.06, ease: 'easeOut' }}
               >
-                <div className="aspect-[4/5] bg-[#FAFAF8] border border-[#EAEAEA] mb-4 relative overflow-hidden flex items-center justify-center text-gray-300">
-                  {product.stockStatus === 'limited' && (
-                    <div className="absolute top-4 right-4 bg-[#6E1F2B] text-white px-3 py-1 text-[10px] font-bold uppercase tracking-widest z-10">Limited</div>
-                  )}
-                  {product.stockStatus === 'in_stock' && (
-                    <div className="absolute top-4 left-4 bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-widest border border-[#EAEAEA] z-10">In Stock</div>
-                  )}
-                  {product.stockStatus === 'out_of_stock' && (
-                    <div className="absolute top-4 left-4 bg-gray-200 text-gray-500 px-3 py-1 text-[10px] font-bold uppercase tracking-widest border border-[#EAEAEA] z-10">Sold Out</div>
-                  )}
+                <Link 
+                  to={`/product/${product.id}`}
+                  className="group block cursor-pointer"
+                >
+                  <div className="aspect-[4/5] bg-[#FAFAF8] border border-[#EAEAEA] mb-4 relative overflow-hidden flex items-center justify-center text-gray-300">
+                    {product.stockStatus === 'limited' && (
+                      <div className="absolute top-4 right-4 bg-[#6E1F2B] text-white px-3 py-1 text-[10px] font-bold uppercase tracking-widest z-10">Limited</div>
+                    )}
+                    {product.stockStatus === 'in_stock' && (
+                      <div className="absolute top-4 left-4 bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-widest border border-[#EAEAEA] z-10">In Stock</div>
+                    )}
+                    {product.stockStatus === 'out_of_stock' && (
+                      <div className="absolute top-4 left-4 bg-gray-200 text-gray-500 px-3 py-1 text-[10px] font-bold uppercase tracking-widest border border-[#EAEAEA] z-10">Sold Out</div>
+                    )}
 
-                  {product.images && product.images[0] ? (
-                    <img 
-                      src={product.images[0]} 
-                      alt={product.name} 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-300 bg-[#FAFAF8]">No Image</div>
-                  )}
-                </div>
-                <div>
-                  <div className="flex justify-between items-start mb-1">
-                    <h3 className="text-lg font-medium text-brand-black line-clamp-1">{product.name}</h3>
-                    <span className="text-[#6E1F2B] font-semibold">{formatPrice(product.price)}</span>
+                    {product.images && product.images[0] ? (
+                      <img 
+                        src={product.images[0]} 
+                        alt={product.name} 
+                        className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06]"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-300 bg-[#FAFAF8]">No Image</div>
+                    )}
                   </div>
-                  <p className="text-xs text-gray-500 mt-1 uppercase tracking-tighter">{product.category} {product.material ? `• ${product.material}` : ''}</p>
-                </div>
-              </Link>
+                  <div>
+                    <div className="flex justify-between items-start mb-1">
+                      <h3 className="text-lg font-medium text-brand-black line-clamp-1">{product.name}</h3>
+                      <span className="text-[#6E1F2B] font-semibold">{formatPrice(product.price)}</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1 uppercase tracking-tighter">{product.category} {product.material ? `• ${product.material}` : ''}</p>
+                  </div>
+                </Link>
+              </motion.div>
             ))}
           </div>
         ) : (
@@ -117,25 +141,38 @@ export function Home() {
             <p className="text-gray-500 font-medium">No products currently available.</p>
           </div>
         )}
-      </section>
+      </motion.section>
 
       {/* Categories */}
-      <section className="bg-[#FAFAF8] py-16 px-4 border-t border-[#EAEAEA]">
+      <motion.section
+        className="bg-[#FAFAF8] py-16 px-4 border-t border-[#EAEAEA]"
+        initial={{ opacity: 0, y: 16 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-80px' }}
+        transition={{ duration: 0.45, ease: 'easeOut' }}
+      >
         <div className="max-w-7xl mx-auto">
           <h2 className="text-2xl font-medium text-brand-black mb-8 text-center tracking-tight">Browse by Category</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {['Powerloom', 'Cotton', 'Printed', 'Saree'].map(category => (
-              <Link 
+            {['Powerloom', 'Cotton', 'Printed', 'Saree'].map((category, index) => (
+              <motion.div
                 key={category}
-                to={`/products?category=${category}`}
-                className="bg-white p-6 border border-[#EAEAEA] text-center hover:border-brand-gold transition-colors"
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-50px' }}
+                transition={{ duration: 0.35, delay: index * 0.06, ease: 'easeOut' }}
               >
-                <h3 className="font-medium text-brand-black uppercase tracking-wider text-sm">{category}</h3>
-              </Link>
+                <Link 
+                  to={`/products?category=${category}`}
+                  className="block bg-white p-6 border border-[#EAEAEA] text-center hover:border-brand-gold transition-colors"
+                >
+                  <h3 className="font-medium text-brand-black uppercase tracking-wider text-sm">{category}</h3>
+                </Link>
+              </motion.div>
             ))}
           </div>
         </div>
-      </section>
+      </motion.section>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { Link, useSearchParams } from 'react-router-dom';
 import { Search, ChevronDown } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { motion } from 'motion/react';
 import { getProducts } from '../lib/store';
 import { Product } from '../types';
 import { formatPrice } from '../lib/utils';
@@ -104,42 +105,49 @@ export function Products() {
         </div>
       ) : filteredProducts.length > 0 ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-          {filteredProducts.map(product => (
-            <Link 
-              key={product.id} 
-              to={`/product/${product.id}`}
-              className="group block cursor-pointer"
+          {filteredProducts.map((product, index) => (
+            <motion.div
+              key={product.id}
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-40px' }}
+              transition={{ duration: 0.35, delay: Math.min(index % 4, 3) * 0.04, ease: 'easeOut' }}
             >
-              <div className="aspect-[4/5] bg-[#FAFAF8] border border-[#EAEAEA] mb-4 relative overflow-hidden flex items-center justify-center text-gray-300">
-                {product.stockStatus === 'limited' && (
-                  <div className="absolute top-4 right-4 bg-[#6E1F2B] text-white px-3 py-1 text-[10px] font-bold uppercase tracking-widest z-10">Limited</div>
-                )}
-                {product.stockStatus === 'in_stock' && (
-                  <div className="absolute top-4 left-4 bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-widest border border-[#EAEAEA] z-10">In Stock</div>
-                )}
-                {product.stockStatus === 'out_of_stock' && (
-                  <div className="absolute top-4 left-4 bg-gray-200 text-gray-500 px-3 py-1 text-[10px] font-bold uppercase tracking-widest border border-[#EAEAEA] z-10">Sold Out</div>
-                )}
+              <Link 
+                to={`/product/${product.id}`}
+                className="group block cursor-pointer"
+              >
+                <div className="aspect-[4/5] bg-[#FAFAF8] border border-[#EAEAEA] mb-4 relative overflow-hidden flex items-center justify-center text-gray-300">
+                  {product.stockStatus === 'limited' && (
+                    <div className="absolute top-4 right-4 bg-[#6E1F2B] text-white px-3 py-1 text-[10px] font-bold uppercase tracking-widest z-10">Limited</div>
+                  )}
+                  {product.stockStatus === 'in_stock' && (
+                    <div className="absolute top-4 left-4 bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-widest border border-[#EAEAEA] z-10">In Stock</div>
+                  )}
+                  {product.stockStatus === 'out_of_stock' && (
+                    <div className="absolute top-4 left-4 bg-gray-200 text-gray-500 px-3 py-1 text-[10px] font-bold uppercase tracking-widest border border-[#EAEAEA] z-10">Sold Out</div>
+                  )}
 
-                {product.images && product.images[0] ? (
-                  <img 
-                    src={product.images[0]} 
-                    alt={product.name} 
-                    loading="lazy"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-300 bg-[#FAFAF8]">No Image</div>
-                )}
-              </div>
-              <div>
-                <div className="flex justify-between items-start mb-1">
-                  <h3 className="text-lg font-medium text-brand-black line-clamp-1">{product.name}</h3>
-                  <span className="text-[#6E1F2B] font-semibold">{formatPrice(product.price)}</span>
+                  {product.images && product.images[0] ? (
+                    <img 
+                      src={product.images[0]} 
+                      alt={product.name} 
+                      loading="lazy"
+                      className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06]"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-300 bg-[#FAFAF8]">No Image</div>
+                  )}
                 </div>
-                <p className="text-xs text-gray-500 mt-1 uppercase tracking-tighter">{product.category} {product.material ? `• ${product.material}` : ''}</p>
-              </div>
-            </Link>
+                <div>
+                  <div className="flex justify-between items-start mb-1">
+                    <h3 className="text-lg font-medium text-brand-black line-clamp-1">{product.name}</h3>
+                    <span className="text-[#6E1F2B] font-semibold">{formatPrice(product.price)}</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1 uppercase tracking-tighter">{product.category} {product.material ? `• ${product.material}` : ''}</p>
+                </div>
+              </Link>
+            </motion.div>
           ))}
         </div>
       ) : (

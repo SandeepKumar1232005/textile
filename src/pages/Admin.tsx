@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getProducts, createProduct, updateProduct, deleteProduct } from '../lib/store';
+import { getProducts, createProduct, updateProduct, deleteProduct, getCategories, createCategory, deleteCategory } from '../lib/store';
 import { Product } from '../types';
 import { supabase } from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
@@ -8,6 +8,7 @@ import { formatPrice, resizeImageFile } from '../lib/utils';
 
 export function Admin() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const navigate = useNavigate();
@@ -16,6 +17,10 @@ export function Admin() {
   const [currentProduct, setCurrentProduct] = useState<Partial<Product> | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [aiParsing, setAiParsing] = useState(false);
+
+  // Category Management states
+  const [showCategoryMgr, setShowCategoryMgr] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -27,7 +32,7 @@ export function Admin() {
         alert('Access denied: Only the owner account can manage products.');
       } else {
         setUser(session.user);
-        loadProducts();
+        loadData();
       }
     });
 
@@ -48,11 +53,15 @@ export function Admin() {
     };
   }, [navigate]);
 
-  async function loadProducts() {
+  async function loadData() {
     setLoading(true);
     try {
-      const data = await getProducts();
-      setProducts(data);
+      const [productsData, categoriesData] = await Promise.all([
+        getProducts(),
+        getCategories()
+      ]);
+      setProducts(productsData);
+      setCategories(categoriesData);
     } catch (err) {
       console.error(err);
     } finally {
@@ -77,7 +86,7 @@ export function Admin() {
       }
       setIsEditing(false);
       setCurrentProduct(null);
-      loadProducts();
+      loadData();
     } catch (err) {
       console.error(err);
       alert('Error saving product');
@@ -88,10 +97,37 @@ export function Admin() {
     if (confirm('Are you sure you want to delete this product?')) {
       try {
         await deleteProduct(id);
-        loadProducts();
+        loadData();
       } catch (err) {
         console.error(err);
         alert('Error deleting product');
+      }
+    }
+  };
+
+  const handleAddCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const name = newCategoryName.trim();
+    if (!name) return;
+    try {
+      await createCategory(name);
+      setNewCategoryName('');
+      loadData();
+      alert(`Category "${name}" successfully added!`);
+    } catch (err: any) {
+      console.error(err);
+      alert('Error adding category. Please ensure the "categories" table is created in your Supabase database.');
+    }
+  };
+
+  const handleDeleteCategory = async (name: string) => {
+    if (confirm(`Are you sure you want to delete the category "${name}"? Products in this category will not be deleted but they will no longer show under this category.`)) {
+      try {
+        await deleteCategory(name);
+        loadData();
+      } catch (err: any) {
+        console.error(err);
+        alert('Error deleting category: ' + (err.message || err));
       }
     }
   };
@@ -158,7 +194,7 @@ Please extract the following details from it, if present. Respond ONLY with a va
   "colorCombination": "string (Colors or pechits, e.g. 'Rose + Light Green')",
   "price": "number (Price of the product, e.g. 230)",
   "ownerPhone": "string (Phone/WhatsApp contact number, e.g. '9952319263' or '+919952319263')",
-  "category": "string (Must be exactly one of: 'Powerloom', 'Cotton', 'Printed', 'Saree', 'Dress Material')",
+  "category": "string (Must be exactly one of: ${categories.map(c => `'${c}'`).join(', ')})",
   "material": "string (e.g. 'Cotton', 'Silk', etc.)",
   "description": "string (A brief 1-2 sentence description summarizing the product details)"
 }
@@ -189,9 +225,9 @@ Return only the raw JSON. Do not write markdown, code blocks (such as \`\`\`json
         colorCombination: data.colorCombination || prev?.colorCombination || '',
         price: typeof data.price === 'number' ? data.price : Number(data.price) || prev?.price || 0,
         ownerPhone: data.ownerPhone || prev?.ownerPhone || '+919952319263',
-        category: ['Powerloom', 'Cotton', 'Printed', 'Saree', 'Dress Material'].includes(data.category) 
+        category: categories.includes(data.category) 
           ? data.category 
-          : prev?.category || 'Powerloom',
+          : prev?.category || categories[0] || 'Bedsheets',
         material: data.material || prev?.material || '',
         description: data.description || prev?.description || '',
         images: [...(prev?.images || []), base64Image]
@@ -228,27 +264,81 @@ Return only the raw JSON. Do not write markdown, code blocks (such as \`\`\`json
           <div>
             <div className="flex justify-between items-center mb-8">
               <div>
-                <h2 className="text-2xl font-semibold text-brand-black">Products</h2>
-                <p className="text-gray-500 text-sm mt-1">Total: {products.length} items</p>
+                <h2 className="text-2xl font-semibold text-brand-black">{showCategoryMgr ? 'Categories' : 'Products'}</h2>
+                <p className="text-gray-500 text-sm mt-1">
+                  {showCategoryMgr ? `Total: ${categories.length} categories` : `Total: ${products.length} items`}
+                </p>
               </div>
-              <button 
-                onClick={() => {
-                  setCurrentProduct({
-                    category: 'Powerloom',
-                    stockStatus: 'in_stock',
-                    images: [],
-                    ownerPhone: '+919952319263' // Default
-                  });
-                  setIsEditing(true);
-                }}
-                className="px-4 py-2 bg-brand-black text-white rounded-sm font-medium hover:bg-gray-800 transition-colors flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" /> Add Product
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowCategoryMgr(!showCategoryMgr)}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 bg-white rounded-sm font-medium hover:bg-gray-50 transition-colors text-sm"
+                >
+                  {showCategoryMgr ? 'View Products' : 'Manage Categories'}
+                </button>
+                {!showCategoryMgr && (
+                  <button 
+                    onClick={() => {
+                      setCurrentProduct({
+                        category: categories[0] || 'Bedsheets',
+                        stockStatus: 'in_stock',
+                        images: [],
+                        ownerPhone: '+919952319263' // Default
+                      });
+                      setIsEditing(true);
+                    }}
+                    className="px-4 py-2 bg-brand-black text-white rounded-sm font-medium hover:bg-gray-800 transition-colors flex items-center gap-2 text-sm"
+                  >
+                    <Plus className="w-4 h-4" /> Add Product
+                  </button>
+                )}
+              </div>
             </div>
 
             {loading ? (
-              <div className="text-center py-12 text-gray-500">Loading products...</div>
+              <div className="text-center py-12 text-gray-500">Loading details...</div>
+            ) : showCategoryMgr ? (
+              <div className="bg-white p-6 md:p-8 rounded-lg border border-gray-200 max-w-2xl">
+                <h3 className="text-base font-semibold text-brand-black mb-4">Add New Category</h3>
+                <form onSubmit={handleAddCategory} className="flex gap-3 mb-8">
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Blankets"
+                    value={newCategoryName}
+                    onChange={e => setNewCategoryName(e.target.value)}
+                    className="flex-grow px-4 py-2 border border-gray-200 rounded-sm focus:outline-none focus:border-brand-black text-sm"
+                  />
+                  <button
+                    type="submit"
+                    className="px-6 py-2 bg-brand-black text-white rounded-sm font-medium hover:bg-gray-800 transition-colors text-sm"
+                  >
+                    Add Category
+                  </button>
+                </form>
+
+                <div>
+                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Current Categories</h4>
+                  <div className="divide-y divide-gray-100 border border-gray-100 rounded-sm bg-white">
+                    {categories.length === 0 ? (
+                      <p className="p-4 text-sm text-gray-500">No categories created yet.</p>
+                    ) : (
+                      categories.map(cat => (
+                        <div key={cat} className="flex justify-between items-center p-4">
+                          <span className="font-medium text-brand-black">{cat}</span>
+                          <button
+                            onClick={() => handleDeleteCategory(cat)}
+                            className="text-red-500 hover:text-red-700 transition-colors p-1"
+                            title="Delete Category"
+                          >
+                            <Trash2 className="w-4.5 h-4.5" />
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
             ) : (
               <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                 <div className="overflow-x-auto">
@@ -364,15 +454,13 @@ Return only the raw JSON. Do not write markdown, code blocks (such as \`\`\`json
                   <label className="block text-sm font-medium text-brand-black mb-1">Category *</label>
                   <select 
                     required
-                    value={currentProduct?.category || 'Powerloom'}
+                    value={currentProduct?.category || categories[0] || 'Bedsheets'}
                     onChange={e => setCurrentProduct({...currentProduct, category: e.target.value})}
                     className="w-full px-4 py-2 border border-gray-200 rounded-sm focus:outline-none focus:border-brand-black"
                   >
-                    <option value="Powerloom">Powerloom</option>
-                    <option value="Cotton">Cotton</option>
-                    <option value="Printed">Printed</option>
-                    <option value="Saree">Saree</option>
-                    <option value="Dress Material">Dress Material</option>
+                    {categories.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
                   </select>
                 </div>
                 

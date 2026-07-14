@@ -107,3 +107,47 @@ Please share more details.`;
   const phone = ownerPhone.replace(/[^\d+]/g, '');
   return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 }
+
+const CATEGORIES_TABLE = 'categories';
+const DEFAULT_CATEGORIES = ['Bedsheets', 'Sarees', 'Blankets', 'Towels'];
+
+export async function getCategories(): Promise<string[]> {
+  try {
+    const { data, error } = await supabase
+      .from(CATEGORIES_TABLE)
+      .select('name')
+      .order('name', { ascending: true });
+
+    if (error) {
+      console.warn("Could not load categories from DB, using defaults:", error.message);
+      return DEFAULT_CATEGORIES;
+    }
+    
+    if (!data || data.length === 0) {
+      return DEFAULT_CATEGORIES;
+    }
+    
+    return data.map((c: any) => c.name);
+  } catch (err) {
+    console.error("Error loading categories:", err);
+    return DEFAULT_CATEGORIES;
+  }
+}
+
+export async function createCategory(name: string): Promise<void> {
+  const { error } = await supabase
+    .from(CATEGORIES_TABLE)
+    .insert([{ name }]);
+
+  if (error) throw error;
+}
+
+export async function deleteCategory(name: string): Promise<void> {
+  const { error } = await supabase
+    .from(CATEGORIES_TABLE)
+    .delete()
+    .eq('name', name);
+
+  if (error) throw error;
+}
+

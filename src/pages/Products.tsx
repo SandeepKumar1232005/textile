@@ -2,7 +2,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { Search, ChevronDown } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import { getProducts } from '../lib/store';
+import { getProducts, getCategories } from '../lib/store';
 import { Product } from '../types';
 import { formatPrice } from '../lib/utils';
 
@@ -18,14 +18,18 @@ export function Products() {
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [sortBy, setSortBy] = useState('');
 
-  const categories = ['All', 'Powerloom', 'Cotton', 'Printed', 'Saree', 'Dress Material'];
+  const [categories, setCategories] = useState<string[]>(['All']);
 
   useEffect(() => {
     async function load() {
       try {
-        const data = await getProducts();
-        setProducts(data);
-        setFilteredProducts(data);
+        const [productsData, categoriesData] = await Promise.all([
+          getProducts(),
+          getCategories()
+        ]);
+        setProducts(productsData);
+        setFilteredProducts(productsData);
+        setCategories(['All', ...categoriesData]);
       } catch (err) {
         console.error(err);
       } finally {

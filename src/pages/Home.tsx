@@ -2,19 +2,33 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, MessageCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import { getProducts } from '../lib/store';
+import { getProducts, getCategories } from '../lib/store';
 import { Product } from '../types';
 import { formatPrice } from '../lib/utils';
 
+function getCategoryEmoji(categoryName: string): string {
+  const lower = categoryName.toLowerCase();
+  if (lower.includes('bedsheet')) return '🛏';
+  if (lower.includes('saree')) return '👗';
+  if (lower.includes('blanket')) return '🧺';
+  if (lower.includes('towel')) return '🛁';
+  return '📦';
+}
+
 export function Home() {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
       try {
-        const data = await getProducts();
-        setFeaturedProducts(data.slice(0, 4));
+        const [productsData, categoriesData] = await Promise.all([
+          getProducts(),
+          getCategories()
+        ]);
+        setFeaturedProducts(productsData.slice(0, 4));
+        setCategories(categoriesData);
       } catch (err) {
         console.error(err);
       } finally {
@@ -154,7 +168,7 @@ export function Home() {
         <div className="max-w-7xl mx-auto">
           <h2 className="text-2xl font-medium text-brand-black mb-8 text-center tracking-tight">Browse by Category</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {['Powerloom', 'Cotton', 'Printed', 'Saree'].map((category, index) => (
+            {categories.map((category, index) => (
               <motion.div
                 key={category}
                 initial={{ opacity: 0, y: 12 }}
@@ -166,6 +180,7 @@ export function Home() {
                   to={`/products?category=${category}`}
                   className="block bg-white p-6 border border-[#EAEAEA] text-center hover:border-brand-gold transition-colors"
                 >
+                  <span className="text-3xl mb-2 block">{getCategoryEmoji(category)}</span>
                   <h3 className="font-medium text-brand-black uppercase tracking-wider text-sm">{category}</h3>
                 </Link>
               </motion.div>

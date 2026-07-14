@@ -115,10 +115,10 @@ export function Home() {
                       <div className="absolute top-4 right-4 bg-[#6E1F2B] text-white px-3 py-1 text-[10px] font-bold uppercase tracking-widest z-10">Limited</div>
                     )}
                     {product.stockStatus === 'in_stock' && (
-                      <div className="absolute top-4 left-4 bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-widest border border-[#EAEAEA] z-10">In Stock</div>
+                      <div className="absolute top-4 left-4 bg-green-50 text-green-800 border border-green-200 px-3 py-1 text-[10px] font-bold uppercase tracking-widest z-10">In Stock</div>
                     )}
                     {product.stockStatus === 'out_of_stock' && (
-                      <div className="absolute top-4 left-4 bg-gray-200 text-gray-500 px-3 py-1 text-[10px] font-bold uppercase tracking-widest border border-[#EAEAEA] z-10">Sold Out</div>
+                      <div className="absolute top-4 left-4 bg-gray-100 text-gray-500 border border-gray-200 px-3 py-1 text-[10px] font-bold uppercase tracking-widest z-10">Sold Out</div>
                     )}
 
                     {product.images && product.images[0] ? (

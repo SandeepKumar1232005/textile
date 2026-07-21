@@ -78,32 +78,46 @@ export function Admin() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentProduct || !currentProduct.name) return;
-    
-    const sellingPrice = Number(currentProduct.sellingPrice ?? currentProduct.price ?? 0);
-    let originalPrice = currentProduct.originalPrice !== undefined && currentProduct.originalPrice !== null && currentProduct.originalPrice !== ('' as any)
-      ? Number(currentProduct.originalPrice)
-      : undefined;
 
+    // Selling Price is mandatory and must be > 0
+    const sellingPrice = Number(currentProduct.sellingPrice ?? currentProduct.price ?? 0);
     if (!sellingPrice || sellingPrice <= 0) {
-      alert('Selling Price is mandatory and must be greater than 0.');
+      alert('Selling Price is required and must be greater than 0.');
       return;
     }
 
-    // If Original Price is less than or equal to Selling Price, ignore originalPrice on save so it doesn't block saving
-    if (originalPrice !== undefined && originalPrice <= sellingPrice) {
-      originalPrice = undefined;
+    // Original Price (MRP) is optional. Parse value:
+    const rawOriginal = currentProduct.originalPrice;
+    let parsedOriginalPrice: number | null = null;
+    
+    if (rawOriginal !== undefined && rawOriginal !== null && rawOriginal !== ('' as any)) {
+      const num = Number(rawOriginal);
+      if (!isNaN(num) && num > 0) {
+        parsedOriginalPrice = num;
+      }
     }
+
+    // Only validate Original Price if provided and > 0 (skip validation if empty/cleared)
+    if (parsedOriginalPrice !== null && parsedOriginalPrice < sellingPrice) {
+      alert(`Validation Error: Original Price (MRP ₹${parsedOriginalPrice}) cannot be less than Selling Price (₹${sellingPrice}). Please update or clear Original Price.`);
+      return;
+    }
+
+    // If Original Price is empty, null, or equal to Selling Price, save as null
+    const finalOriginalPrice = (parsedOriginalPrice !== null && parsedOriginalPrice > sellingPrice) 
+      ? parsedOriginalPrice 
+      : null;
 
     const payload = {
       ...currentProduct,
       sellingPrice,
       price: sellingPrice,
-      originalPrice: originalPrice && originalPrice > sellingPrice ? originalPrice : undefined,
+      originalPrice: finalOriginalPrice,
     };
-    
+
     try {
       if (currentProduct.id) {
-        await updateProduct(currentProduct.id, payload);
+        await updateProduct(currentProduct.id, payload as any);
       } else {
         await createProduct(payload as Omit<Product, 'id' | 'createdAt' | 'updatedAt'>);
       }
@@ -111,6 +125,7 @@ export function Admin() {
       setCurrentProduct(null);
       await loadData();
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      alert('✨ Product saved successfully!');
     } catch (err: any) {
       console.error(err);
       alert('Error saving product: ' + (err?.message || err?.details || err));

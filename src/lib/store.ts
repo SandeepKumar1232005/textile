@@ -75,16 +75,19 @@ function mapProductToDb(product: any) {
     data.price = effectiveSellingPrice;
   }
 
-  const effectiveOriginalPrice = product.originalPrice && Number(product.originalPrice) > (effectiveSellingPrice || 0)
-    ? Number(product.originalPrice)
-    : undefined;
-
-  if (product.originalPrice !== undefined) {
-    data.original_price = effectiveOriginalPrice ?? null;
+  let effectiveOriginalPrice: number | null = null;
+  if (product.originalPrice !== undefined && product.originalPrice !== null && product.originalPrice !== ('' as any)) {
+    const parsedMrp = Number(product.originalPrice);
+    if (!isNaN(parsedMrp) && parsedMrp > (effectiveSellingPrice || 0)) {
+      effectiveOriginalPrice = parsedMrp;
+    }
   }
 
+  // Always map original_price: numeric if valid MRP > sellingPrice, otherwise null
+  data.original_price = effectiveOriginalPrice;
+
   if (product.description !== undefined) {
-    data.description = embedOriginalPriceInDescription(product.description, effectiveOriginalPrice);
+    data.description = embedOriginalPriceInDescription(product.description, effectiveOriginalPrice || undefined);
   }
 
   if (product.colorCombination !== undefined) data.color_combination = product.colorCombination;

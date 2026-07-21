@@ -3,15 +3,43 @@ import { Product } from '../types';
 
 const PRODUCTS_TABLE = 'products';
 
+// Helper to extract MRP embedded in description if original_price column is absent in DB
+function extractOriginalPriceFromDescription(desc: string): { cleanDescription: string; embeddedMrp?: number } {
+  if (!desc) return { cleanDescription: '' };
+  const match = desc.match(/\[MRP:(\d+)\]/);
+  if (match) {
+    const embeddedMrp = Number(match[1]);
+    const cleanDescription = desc.replace(/\s*\[MRP:\d+\]/g, '').trim();
+    return { cleanDescription, embeddedMrp };
+  }
+  return { cleanDescription: desc };
+}
+
+// Helper to embed MRP into description string so original price is never lost if DB lacks original_price column
+function embedOriginalPriceInDescription(desc: string = '', originalPrice?: number): string {
+  const cleanDesc = desc.replace(/\s*\[MRP:\d+\]/g, '').trim();
+  if (originalPrice && Number(originalPrice) > 0) {
+    return cleanDesc ? `${cleanDesc}\n[MRP:${originalPrice}]` : `[MRP:${originalPrice}]`;
+  }
+  return cleanDesc;
+}
+
 // Map database snake_case to frontend camelCase
 function mapProductFromDb(data: any): Product {
   const sellingPrice = data.selling_price !== undefined && data.selling_price !== null && data.selling_price !== ''
     ? Number(data.selling_price)
     : Number(data.price || 0);
 
-  const originalPrice = data.original_price !== undefined && data.original_price !== null && data.original_price !== ''
+  const rawDescription = data.description || '';
+  const { cleanDescription, embeddedMrp } = extractOriginalPriceFromDescription(rawDescription);
+
+  let originalPrice = data.original_price !== undefined && data.original_price !== null && data.original_price !== ''
     ? Number(data.original_price)
-    : undefined;
+    : embeddedMrp;
+
+  if (originalPrice !== undefined && originalPrice <= sellingPrice) {
+    originalPrice = undefined;
+  }
 
   return {
     id: data.id,
@@ -22,7 +50,7 @@ function mapProductFromDb(data: any): Product {
     originalPrice: originalPrice,
     colorCombination: data.color_combination || '',
     material: data.material || '',
-    description: data.description || '',
+    description: cleanDescription,
     images: data.images || [],
     stockStatus: data.stock_status,
     ownerPhone: data.owner_phone,
@@ -46,15 +74,21 @@ function mapProductToDb(product: any) {
     data.selling_price = effectiveSellingPrice;
     data.price = effectiveSellingPrice;
   }
+
+  const effectiveOriginalPrice = product.originalPrice && Number(product.originalPrice) > (effectiveSellingPrice || 0)
+    ? Number(product.originalPrice)
+    : undefined;
+
   if (product.originalPrice !== undefined) {
-    data.original_price = product.originalPrice && Number(product.originalPrice) > 0 
-      ? Number(product.originalPrice) 
-      : null;
+    data.original_price = effectiveOriginalPrice ?? null;
+  }
+
+  if (product.description !== undefined) {
+    data.description = embedOriginalPriceInDescription(product.description, effectiveOriginalPrice);
   }
 
   if (product.colorCombination !== undefined) data.color_combination = product.colorCombination;
   if (product.material !== undefined) data.material = product.material;
-  if (product.description !== undefined) data.description = product.description;
   if (product.images !== undefined) data.images = product.images;
   if (product.stockStatus !== undefined) data.stock_status = product.stockStatus;
   if (product.ownerPhone !== undefined) data.owner_phone = product.ownerPhone;

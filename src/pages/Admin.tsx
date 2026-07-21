@@ -110,6 +110,7 @@ export function Admin() {
       setIsEditing(false);
       setCurrentProduct(null);
       loadData();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err: any) {
       console.error(err);
       alert('Error saving product: ' + (err?.message || err?.details || err));
@@ -324,6 +325,7 @@ Return only the raw JSON. Do not write markdown, code blocks (such as \`\`\`json
                         ownerPhone: '+919952319263' // Default
                       });
                       setIsEditing(true);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
                     className="px-4 py-2 bg-brand-black text-white rounded-sm font-medium hover:bg-gray-800 transition-colors flex items-center gap-2 text-sm cursor-pointer"
                   >
@@ -422,7 +424,7 @@ Return only the raw JSON. Do not write markdown, code blocks (such as \`\`\`json
                           </td>
                           <td className="p-4 text-right">
                             <div className="flex items-center justify-end gap-3">
-                              <button onClick={() => { setCurrentProduct(p); setIsEditing(true); }} className="text-blue-600 hover:text-blue-800 p-1 cursor-pointer" title="Edit Product">
+                              <button onClick={() => { setCurrentProduct(p); setIsEditing(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="text-blue-600 hover:text-blue-800 p-1 cursor-pointer" title="Edit Product">
                                 <Edit2 className="w-4 h-4" />
                               </button>
                               <button onClick={() => handleDelete(p.id)} className="text-red-600 hover:text-red-800 p-1 cursor-pointer" title="Delete Product">
@@ -466,7 +468,7 @@ Return only the raw JSON. Do not write markdown, code blocks (such as \`\`\`json
                     />
                   </label>
                 )}
-                <button onClick={() => setIsEditing(false)} className="text-gray-400 hover:text-gray-600 cursor-pointer">
+                <button onClick={() => { setIsEditing(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="text-gray-400 hover:text-gray-600 cursor-pointer">
                   <X className="w-6 h-6" />
                 </button>
               </div>
@@ -691,7 +693,7 @@ Return only the raw JSON. Do not write markdown, code blocks (such as \`\`\`json
               <div className="border-t border-gray-100 pt-6 flex justify-end gap-4">
                 <button 
                   type="button" 
-                  onClick={() => setIsEditing(false)}
+                  onClick={() => { setIsEditing(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                   className="px-6 py-2 border border-gray-300 rounded-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
                 >
                   Cancel

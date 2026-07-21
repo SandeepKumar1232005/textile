@@ -86,13 +86,27 @@ export async function getProduct(id: string): Promise<Product | null> {
 export async function createProduct(product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
   const dbData = mapProductToDb(product);
   
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from(PRODUCTS_TABLE)
     .insert([dbData])
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    // Fallback if Supabase DB table hasn't added selling_price / original_price columns yet
+    if (error.code === 'PGRST204' || error.message?.includes('selling_price') || error.message?.includes('original_price') || error.message?.includes('schema cache')) {
+      delete dbData.selling_price;
+      delete dbData.original_price;
+      const retry = await supabase
+        .from(PRODUCTS_TABLE)
+        .insert([dbData])
+        .select()
+        .single();
+      if (retry.error) throw retry.error;
+      return retry.data.id;
+    }
+    throw error;
+  }
   return data.id;
 }
 
@@ -100,12 +114,25 @@ export async function updateProduct(id: string, updates: Partial<Omit<Product, '
   const dbData = mapProductToDb(updates);
   dbData.updated_at = new Date().toISOString();
 
-  const { error } = await supabase
+  let { error } = await supabase
     .from(PRODUCTS_TABLE)
     .update(dbData)
     .eq('id', id);
 
-  if (error) throw error;
+  if (error) {
+    // Fallback if Supabase DB table hasn't added selling_price / original_price columns yet
+    if (error.code === 'PGRST204' || error.message?.includes('selling_price') || error.message?.includes('original_price') || error.message?.includes('schema cache')) {
+      delete dbData.selling_price;
+      delete dbData.original_price;
+      const retry = await supabase
+        .from(PRODUCTS_TABLE)
+        .update(dbData)
+        .eq('id', id);
+      if (retry.error) throw retry.error;
+      return;
+    }
+    throw error;
+  }
 }
 
 export async function deleteProduct(id: string): Promise<void> {

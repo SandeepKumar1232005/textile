@@ -110,9 +110,9 @@ export function Admin() {
       setIsEditing(false);
       setCurrentProduct(null);
       loadData();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert('Error saving product');
+      alert('Error saving product: ' + (err?.message || err?.details || err));
     }
   };
 

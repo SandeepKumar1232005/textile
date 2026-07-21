@@ -109,7 +109,7 @@ export function Admin() {
       }
       setIsEditing(false);
       setCurrentProduct(null);
-      loadData();
+      await loadData();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err: any) {
       console.error(err);
@@ -121,7 +121,7 @@ export function Admin() {
     if (confirm('Are you sure you want to delete this product?')) {
       try {
         await deleteProduct(id);
-        loadData();
+        await loadData();
       } catch (err) {
         console.error(err);
         alert('Error deleting product');

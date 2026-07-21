@@ -1,13 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { buildWhatsAppLink } from '../lib/store';
 import { useProductDetail, useRelatedProducts } from '../hooks/useProducts';
 import { Product } from '../types';
 import { formatPrice } from '../lib/utils';
-import { PriceDisplay } from '../components/PriceDisplay';
+import { PriceDisplay, DiscountBadge } from '../components/PriceDisplay';
 import { ProductCardSkeleton } from '../components/ProductCardSkeleton';
-import { ArrowLeft, MessageCircle, Phone } from 'lucide-react';
+import { ArrowLeft, MessageCircle, Phone, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -15,11 +15,54 @@ export function ProductDetail() {
   const { data: relatedProducts = [], isLoading: loadingRelated } = useRelatedProducts(product?.category, product?.id);
   const [activeImage, setActiveImage] = useState(0);
 
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+  const [isHovered, setIsHovered] = useState(false);
+
   // Reset active image when product changes
   useEffect(() => {
     setActiveImage(0);
     window.scrollTo(0, 0);
   }, [id]);
+
+  const checkScroll = () => {
+    if (carouselRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current;
+      setCanScrollLeft(scrollLeft > 0);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 1);
+    }
+  };
+
+  useEffect(() => {
+    checkScroll();
+    window.addEventListener('resize', checkScroll);
+    return () => window.removeEventListener('resize', checkScroll);
+  }, [relatedProducts]);
+
+  useEffect(() => {
+    if (!isHovered && relatedProducts.length > 0) {
+      const interval = setInterval(() => {
+        if (carouselRef.current) {
+          const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current;
+          if (scrollLeft < scrollWidth - clientWidth - 1) {
+            carouselRef.current.scrollBy({ left: clientWidth, behavior: 'smooth' });
+          } else {
+            carouselRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+          }
+        }
+      }, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [isHovered, relatedProducts]);
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (carouselRef.current) {
+      const { clientWidth } = carouselRef.current;
+      const scrollAmount = direction === 'left' ? -clientWidth : clientWidth;
+      carouselRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
 
   if (loading) {
     return (
@@ -170,7 +213,7 @@ export function ProductDetail() {
         {loadingRelated ? (
           <div className="mt-24 pt-12 border-t border-[#EAEAEA]">
             <h2 className="text-2xl font-medium tracking-tight text-brand-black mb-8">Related Products</h2>
-            <ProductCardSkeleton count={4} />
+            <ProductCardSkeleton count={4} layout="carousel" columns="flex gap-4 md:gap-8 overflow-hidden" />
           </div>
         ) : relatedProducts.length > 0 ? (
           <motion.div
@@ -179,22 +222,74 @@ export function ProductDetail() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-80px' }}
             transition={{ duration: 0.45, ease: 'easeOut' }}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
           >
-            <h2 className="text-2xl font-medium tracking-tight text-brand-black mb-8">Related Products</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-2xl font-medium tracking-tight text-brand-black">Related Products</h2>
+              <div className="hidden md:flex items-center gap-2">
+                <button 
+                  onClick={() => scroll('left')} 
+                  disabled={!canScrollLeft}
+                  className="w-10 h-10 rounded-full border border-[#EAEAEA] flex items-center justify-center text-gray-500 hover:text-brand-black hover:border-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <button 
+                  onClick={() => scroll('right')} 
+                  disabled={!canScrollRight}
+                  className="w-10 h-10 rounded-full border border-[#EAEAEA] flex items-center justify-center text-gray-500 hover:text-brand-black hover:border-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            <div 
+              ref={carouselRef}
+              onScroll={checkScroll}
+              className="flex gap-4 md:gap-8 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-4"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
               {relatedProducts.map((p, index) => (
-                <motion.div
+                <div 
                   key={p.id}
-                  initial={{ opacity: 0, y: 12 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: '-40px' }}
-                  transition={{ duration: 0.35, delay: Math.min(index, 4) * 0.06, ease: 'easeOut' }}
+                  className="snap-start shrink-0 w-[calc(85vw-1rem)] sm:w-[calc(50%-1rem)] md:w-[calc(33.333%-1.5rem)] lg:w-[calc(25%-1.5rem)]"
                 >
                   <Link 
                     to={`/product/${p.id}`}
                     className="group block cursor-pointer"
                   >
-                    <div className="aspect-[4/5] bg-[#FAFAF8] border border-[#EAEAEA] mb-4 relative overflow-hidden flex items-center justify-center text-gray-300">
+                    <div className="aspect-[4/5] bg-[#FAFAF8] border border-[#EAEAEA] mb-4 relative overflow-hidden flex items-center justify-center text-gray-300 rounded-lg md:rounded-none">
+                      {Boolean(p.originalPrice && p.originalPrice > (p.sellingPrice ?? p.price)) && (
+                        <div className="absolute top-4 right-4 z-10">
+                          <DiscountBadge originalPrice={p.originalPrice} sellingPrice={p.sellingPrice ?? p.price} />
+                        </div>
+                      )}
+                      {p.stockStatus === 'limited' && (
+                        <div 
+                          style={{ color: '#ffffff', backgroundColor: '#6E1F2B' }}
+                          className="absolute top-4 left-4 px-3 py-1 text-[10px] font-bold uppercase tracking-widest z-10"
+                        >
+                          Limited
+                        </div>
+                      )}
+                      {p.stockStatus === 'in_stock' && (
+                        <div 
+                          style={{ color: '#166534', backgroundColor: '#f0fdf4', borderColor: '#bbf7d0', borderWidth: '1px', borderStyle: 'solid' }}
+                          className="absolute top-4 left-4 px-3 py-1 text-[10px] font-bold uppercase tracking-widest z-10"
+                        >
+                          In Stock
+                        </div>
+                      )}
+                      {p.stockStatus === 'out_of_stock' && (
+                        <div 
+                          style={{ color: '#4b5563', backgroundColor: '#f3f4f6', borderColor: '#e5e7eb', borderWidth: '1px', borderStyle: 'solid' }}
+                          className="absolute top-4 left-4 px-3 py-1 text-[10px] font-bold uppercase tracking-widest z-10"
+                        >
+                          Sold Out
+                        </div>
+                      )}
+
                       {p.images && p.images[0] ? (
                         <img 
                           src={p.images[0]} 
@@ -216,11 +311,12 @@ export function ProductDetail() {
                           sellingPrice={p.sellingPrice ?? p.price} 
                           originalPrice={p.originalPrice} 
                           size="sm" 
+                          showDiscountBadge={false}
                         />
                       </div>
                     </div>
                   </Link>
-                </motion.div>
+                </div>
               ))}
             </div>
           </motion.div>

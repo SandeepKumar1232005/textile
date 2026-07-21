@@ -25,7 +25,7 @@ export function useRelatedProducts(category: string | undefined, excludeId: stri
     queryKey: ['products', 'related', category, excludeId],
     queryFn: () =>
       category && excludeId
-        ? getRelatedProducts(category, excludeId, 4)
+        ? getRelatedProducts(category, excludeId, 15)
         : Promise.resolve([]),
     enabled: !!category && !!excludeId,
   });

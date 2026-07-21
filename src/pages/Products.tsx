@@ -5,6 +5,7 @@ import { motion } from 'motion/react';
 import { getProducts, getCategories } from '../lib/store';
 import { Product } from '../types';
 import { formatPrice } from '../lib/utils';
+import { PriceDisplay, DiscountBadge } from '../components/PriceDisplay';
 
 export function Products() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -51,9 +52,9 @@ export function Products() {
     }
 
     if (sortBy === 'price-low') {
-      result = [...result].sort((a, b) => a.price - b.price);
+      result = [...result].sort((a, b) => (a.sellingPrice ?? a.price) - (b.sellingPrice ?? b.price));
     } else if (sortBy === 'price-high') {
-      result = [...result].sort((a, b) => b.price - a.price);
+      result = [...result].sort((a, b) => (b.sellingPrice ?? b.price) - (a.sellingPrice ?? a.price));
     }
 
     setFilteredProducts(result);
@@ -122,10 +123,15 @@ export function Products() {
                 className="group block cursor-pointer"
               >
                 <div className="aspect-[4/5] bg-[#FAFAF8] border border-[#EAEAEA] mb-4 relative overflow-hidden flex items-center justify-center text-gray-300">
+                  {Boolean(product.originalPrice && product.originalPrice > (product.sellingPrice ?? product.price)) && (
+                    <div className="absolute top-4 right-4 z-10">
+                      <DiscountBadge originalPrice={product.originalPrice} sellingPrice={product.sellingPrice ?? product.price} />
+                    </div>
+                  )}
                   {product.stockStatus === 'limited' && (
                     <div 
                       style={{ color: '#ffffff', backgroundColor: '#6E1F2B' }}
-                      className="absolute top-4 right-4 px-3 py-1 text-[10px] font-bold uppercase tracking-widest z-10"
+                      className="absolute top-4 left-4 px-3 py-1 text-[10px] font-bold uppercase tracking-widest z-10"
                     >
                       Limited
                     </div>
@@ -159,9 +165,14 @@ export function Products() {
                   )}
                 </div>
                 <div>
-                  <div className="flex justify-between items-start mb-1">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1 mb-1">
                     <h3 className="text-lg font-medium text-brand-black line-clamp-1">{product.name}</h3>
-                    <span className="text-[#6E1F2B] font-semibold">{formatPrice(product.price)}</span>
+                    <PriceDisplay 
+                      sellingPrice={product.sellingPrice ?? product.price} 
+                      originalPrice={product.originalPrice} 
+                      size="sm" 
+                      showDiscountBadge={false}
+                    />
                   </div>
                   <p className="text-xs text-gray-500 mt-1 uppercase tracking-tighter">{product.category} {product.material ? `• ${product.material}` : ''}</p>
                 </div>

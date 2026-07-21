@@ -5,11 +5,21 @@ const PRODUCTS_TABLE = 'products';
 
 // Map database snake_case to frontend camelCase
 function mapProductFromDb(data: any): Product {
+  const sellingPrice = data.selling_price !== undefined && data.selling_price !== null && data.selling_price !== ''
+    ? Number(data.selling_price)
+    : Number(data.price || 0);
+
+  const originalPrice = data.original_price !== undefined && data.original_price !== null && data.original_price !== ''
+    ? Number(data.original_price)
+    : undefined;
+
   return {
     id: data.id,
     name: data.name,
     category: data.category,
-    price: Number(data.price),
+    price: sellingPrice,
+    sellingPrice: sellingPrice,
+    originalPrice: originalPrice,
     colorCombination: data.color_combination || '',
     material: data.material || '',
     description: data.description || '',
@@ -27,7 +37,21 @@ function mapProductToDb(product: any) {
   const data: any = {};
   if (product.name !== undefined) data.name = product.name;
   if (product.category !== undefined) data.category = product.category;
-  if (product.price !== undefined) data.price = product.price;
+  
+  const effectiveSellingPrice = product.sellingPrice !== undefined 
+    ? Number(product.sellingPrice) 
+    : (product.price !== undefined ? Number(product.price) : undefined);
+  
+  if (effectiveSellingPrice !== undefined) {
+    data.selling_price = effectiveSellingPrice;
+    data.price = effectiveSellingPrice;
+  }
+  if (product.originalPrice !== undefined) {
+    data.original_price = product.originalPrice && Number(product.originalPrice) > 0 
+      ? Number(product.originalPrice) 
+      : null;
+  }
+
   if (product.colorCombination !== undefined) data.color_combination = product.colorCombination;
   if (product.material !== undefined) data.material = product.material;
   if (product.description !== undefined) data.description = product.description;
@@ -95,12 +119,17 @@ export async function deleteProduct(id: string): Promise<void> {
 
 export function buildWhatsAppLink(product: Product, ownerPhone: string) {
   const productLink = `${window.location.origin}/product/${product.id}`;
+  const currentPrice = product.sellingPrice ?? product.price;
+  const priceDisplay = (product.originalPrice && product.originalPrice > currentPrice)
+    ? `₹${currentPrice} (MRP: ₹${product.originalPrice})`
+    : `₹${currentPrice}`;
+
   const message = `Hello Madhumitha Tex,
 I am interested in this product.
 
 Product: ${product.name}
 Color: ${product.colorCombination}
-Price: ₹${product.price}
+Price: ${priceDisplay}
 Link: ${productLink}
 
 Please share more details.`;

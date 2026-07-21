@@ -5,6 +5,8 @@ export interface Product {
   colorCombination: string;  // e.g. "Rose + Light Green"
   material: string;
   price: number;
+  sellingPrice: number;
+  originalPrice?: number;
   description: string;
   images: string[];          // Cloudinary/Storage URLs or Base64, multiple allowed
   stockStatus: "in_stock" | "limited" | "out_of_stock";

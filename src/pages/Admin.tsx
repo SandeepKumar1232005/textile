@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, X, Image as ImageIcon, LogOut, Sparkles } from 'lucide-react';
 import { formatPrice, resizeImageFile } from '../lib/utils';
+import { PriceDisplay } from '../components/PriceDisplay';
 
 export function Admin() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -76,13 +77,35 @@ export function Admin() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentProduct || !currentProduct.name || !currentProduct.price) return;
+    if (!currentProduct || !currentProduct.name) return;
+    
+    const sellingPrice = Number(currentProduct.sellingPrice ?? currentProduct.price ?? 0);
+    const originalPrice = currentProduct.originalPrice !== undefined && currentProduct.originalPrice !== null && currentProduct.originalPrice !== ('' as any)
+      ? Number(currentProduct.originalPrice)
+      : undefined;
+
+    if (!sellingPrice || sellingPrice <= 0) {
+      alert('Selling Price is mandatory and must be greater than 0.');
+      return;
+    }
+
+    if (originalPrice !== undefined && originalPrice > 0 && sellingPrice > originalPrice) {
+      alert(`Validation Error: Selling Price (₹${sellingPrice}) cannot exceed Original Price (MRP ₹${originalPrice}).`);
+      return;
+    }
+
+    const payload = {
+      ...currentProduct,
+      sellingPrice,
+      price: sellingPrice,
+      originalPrice: originalPrice && originalPrice > 0 ? originalPrice : undefined,
+    };
     
     try {
       if (currentProduct.id) {
-        await updateProduct(currentProduct.id, currentProduct);
+        await updateProduct(currentProduct.id, payload);
       } else {
-        await createProduct(currentProduct as Omit<Product, 'id' | 'createdAt' | 'updatedAt'>);
+        await createProduct(payload as Omit<Product, 'id' | 'createdAt' | 'updatedAt'>);
       }
       setIsEditing(false);
       setCurrentProduct(null);
@@ -165,7 +188,7 @@ export function Admin() {
       const mimeType = match[1];
       const base64Data = match[2];
 
-      const apiKey = (process.env as any).GEMINI_API_KEY || import.meta.env.VITE_GEMINI_API_KEY;
+      const apiKey = (process.env as any).GEMINI_API_KEY || (import.meta as any).env?.VITE_GEMINI_API_KEY;
       if (!apiKey) {
         throw new Error('GEMINI_API_KEY is not configured in .env.local');
       }
@@ -192,7 +215,8 @@ Please extract the following details from it, if present. Respond ONLY with a va
 {
   "name": "string (The name of the product/fabric, e.g. 'lightweight powerloom')",
   "colorCombination": "string (Colors or pechits, e.g. 'Rose + Light Green')",
-  "price": "number (Price of the product, e.g. 230)",
+  "originalPrice": "number (Original price / MRP of the product if listed or crossed out, e.g. 999)",
+  "sellingPrice": "number (Selling price / current price of the product, e.g. 699)",
   "ownerPhone": "string (Phone/WhatsApp contact number, e.g. '9952319263' or '+919952319263')",
   "category": "string (Must be exactly one of: ${categories.map(c => `'${c}'`).join(', ')})",
   "material": "string (e.g. 'Cotton', 'Silk', etc.)",
@@ -220,20 +244,32 @@ Return only the raw JSON. Do not write markdown, code blocks (such as \`\`\`json
       const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
       const data = JSON.parse(cleanText);
 
-      setCurrentProduct(prev => ({
-        ...prev,
-        name: data.name || prev?.name || '',
-        colorCombination: data.colorCombination || prev?.colorCombination || '',
-        price: typeof data.price === 'number' ? data.price : Number(data.price) || prev?.price || 0,
-        ownerPhone: data.ownerPhone || prev?.ownerPhone || '+919952319263',
-        category: categories.includes(data.category) 
-          ? data.category 
-          : prev?.category || categories[0] || 'Bedsheets',
-        material: data.material || prev?.material || '',
-        size: data.size || prev?.size || '',
-        description: data.description || prev?.description || '',
-        images: [...(prev?.images || []), base64Image]
-      }));
+      setCurrentProduct(prev => {
+        const parsedSellingPrice = typeof data.sellingPrice === 'number'
+          ? data.sellingPrice
+          : (Number(data.sellingPrice) || (typeof data.price === 'number' ? data.price : Number(data.price)) || prev?.sellingPrice || prev?.price || 0);
+
+        const parsedOriginalPrice = typeof data.originalPrice === 'number'
+          ? data.originalPrice
+          : (Number(data.originalPrice) || prev?.originalPrice);
+
+        return {
+          ...prev,
+          name: data.name || prev?.name || '',
+          colorCombination: data.colorCombination || prev?.colorCombination || '',
+          sellingPrice: parsedSellingPrice,
+          price: parsedSellingPrice,
+          originalPrice: parsedOriginalPrice,
+          ownerPhone: data.ownerPhone || prev?.ownerPhone || '+919952319263',
+          category: categories.includes(data.category) 
+            ? data.category 
+            : prev?.category || categories[0] || 'Bedsheets',
+          material: data.material || prev?.material || '',
+          size: data.size || prev?.size || '',
+          description: data.description || prev?.description || '',
+          images: [...(prev?.images || []), base64Image]
+        };
+      });
 
       alert('✨ AI successfully auto-filled product details from the image!');
     } catch (err: any) {
@@ -369,7 +405,13 @@ Return only the raw JSON. Do not write markdown, code blocks (such as \`\`\`json
                           </td>
                           <td className="p-4 font-medium text-brand-black">{p.name}</td>
                           <td className="p-4 text-gray-600">{p.category}</td>
-                          <td className="p-4 text-brand-maroon font-medium">{formatPrice(p.price)}</td>
+                          <td className="p-4 text-brand-maroon font-medium">
+                            <PriceDisplay 
+                              sellingPrice={p.sellingPrice ?? p.price} 
+                              originalPrice={p.originalPrice} 
+                              size="sm" 
+                            />
+                          </td>
                           <td className="p-4">
                             <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
                               p.stockStatus === 'in_stock' ? 'bg-green-100 text-green-800' : 
@@ -467,14 +509,45 @@ Return only the raw JSON. Do not write markdown, code blocks (such as \`\`\`json
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-brand-black mb-1">Price (₹) *</label>
+                  <label className="block text-sm font-medium text-brand-black mb-1">
+                    Original Price (MRP ₹) <span className="text-xs text-gray-400 font-normal">(Optional)</span>
+                  </label>
                   <input 
-                    type="number" required min="0"
-                    value={currentProduct?.price || ''}
-                    onChange={e => setCurrentProduct({...currentProduct, price: Number(e.target.value)})}
+                    type="number" min="0" placeholder="e.g. 999"
+                    value={currentProduct?.originalPrice ?? ''}
+                    onChange={e => setCurrentProduct({
+                      ...currentProduct, 
+                      originalPrice: e.target.value === '' ? undefined : Number(e.target.value)
+                    })}
                     className="w-full px-4 py-2 border border-gray-200 rounded-sm focus:outline-none focus:border-brand-black"
                   />
                 </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-brand-black mb-1">
+                    Selling Price (₹) *
+                  </label>
+                  <input 
+                    type="number" required min="1" placeholder="e.g. 699"
+                    value={currentProduct?.sellingPrice ?? currentProduct?.price ?? ''}
+                    onChange={e => setCurrentProduct({
+                      ...currentProduct, 
+                      sellingPrice: Number(e.target.value),
+                      price: Number(e.target.value)
+                    })}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-sm focus:outline-none focus:border-brand-black"
+                  />
+                </div>
+
+                {Boolean(
+                  currentProduct?.originalPrice && 
+                  (currentProduct?.sellingPrice ?? currentProduct?.price) && 
+                  Number(currentProduct?.sellingPrice ?? currentProduct?.price) > Number(currentProduct?.originalPrice)
+                ) && (
+                  <div className="md:col-span-2 p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-sm font-medium">
+                    ⚠️ Validation Error: Selling Price (₹{currentProduct?.sellingPrice ?? currentProduct?.price}) cannot exceed Original Price (MRP ₹{currentProduct?.originalPrice}).
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-sm font-medium text-brand-black mb-1">Color Combination</label>

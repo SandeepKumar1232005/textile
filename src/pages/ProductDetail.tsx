@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { getProduct, getProducts, buildWhatsAppLink } from '../lib/store';
 import { Product } from '../types';
 import { formatPrice } from '../lib/utils';
+import { PriceDisplay } from '../components/PriceDisplay';
 import { ArrowLeft, MessageCircle, Phone } from 'lucide-react';
 
 export function ProductDetail() {
@@ -117,7 +118,13 @@ export function ProductDetail() {
           >
             <div className="text-[10px] text-[#B8912F] font-bold mb-4 uppercase tracking-[0.2em]">{product.category}</div>
             <h1 className="text-3xl md:text-4xl font-medium text-brand-black mb-4 leading-[1.1] tracking-tight">{product.name}</h1>
-            <div className="text-2xl font-semibold text-[#6E1F2B] mb-8">{formatPrice(product.price)}</div>
+            <div className="mb-8">
+              <PriceDisplay 
+                sellingPrice={product.sellingPrice ?? product.price} 
+                originalPrice={product.originalPrice} 
+                size="lg" 
+              />
+            </div>
 
             <div className="space-y-0 mb-8 text-[13px] border-t border-[#EAEAEA]">
               <div className="grid grid-cols-3 py-4 border-b border-[#EAEAEA]">
@@ -204,9 +211,13 @@ export function ProductDetail() {
                       )}
                     </div>
                     <div>
-                      <div className="flex justify-between items-start mb-1">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1 mb-1">
                         <h3 className="font-medium text-brand-black line-clamp-1">{p.name}</h3>
-                        <span className="text-[#6E1F2B] font-semibold">{formatPrice(p.price)}</span>
+                        <PriceDisplay 
+                          sellingPrice={p.sellingPrice ?? p.price} 
+                          originalPrice={p.originalPrice} 
+                          size="sm" 
+                        />
                       </div>
                     </div>
                   </Link>

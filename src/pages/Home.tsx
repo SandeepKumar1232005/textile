@@ -5,6 +5,7 @@ import { motion } from 'motion/react';
 import { getProducts, getCategories } from '../lib/store';
 import { Product } from '../types';
 import { formatPrice } from '../lib/utils';
+import { PriceDisplay, DiscountBadge } from '../components/PriceDisplay';
 
 export function Home() {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
@@ -126,10 +127,15 @@ export function Home() {
                   className="group block cursor-pointer"
                 >
                   <div className="aspect-[4/5] bg-[#FAFAF8] border border-[#EAEAEA] mb-3 md:mb-4 relative overflow-hidden flex items-center justify-center text-gray-300 rounded-lg md:rounded-none">
+                    {Boolean(product.originalPrice && product.originalPrice > (product.sellingPrice ?? product.price)) && (
+                      <div className="absolute top-4 right-4 z-10">
+                        <DiscountBadge originalPrice={product.originalPrice} sellingPrice={product.sellingPrice ?? product.price} />
+                      </div>
+                    )}
                     {product.stockStatus === 'limited' && (
                       <div 
                         style={{ color: '#ffffff', backgroundColor: '#6E1F2B' }}
-                        className="absolute top-4 right-4 px-3 py-1 text-[10px] font-bold uppercase tracking-widest z-10"
+                        className="absolute top-4 left-4 px-3 py-1 text-[10px] font-bold uppercase tracking-widest z-10"
                       >
                         Limited
                       </div>
@@ -163,9 +169,14 @@ export function Home() {
                     )}
                   </div>
                   <div className="px-0.5 md:px-0">
-                    <div className="flex justify-between items-start mb-1">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1 mb-1">
                       <h3 className="text-sm md:text-lg font-medium text-brand-black line-clamp-1">{product.name}</h3>
-                      <span className="text-[#6E1F2B] text-sm md:text-base font-semibold ml-2 shrink-0">{formatPrice(product.price)}</span>
+                      <PriceDisplay 
+                        sellingPrice={product.sellingPrice ?? product.price} 
+                        originalPrice={product.originalPrice} 
+                        size="sm" 
+                        showDiscountBadge={false}
+                      />
                     </div>
                     <p className="text-[10px] md:text-xs text-gray-500 mt-0.5 md:mt-1 uppercase tracking-tighter">{product.category} {product.material ? `• ${product.material}` : ''}</p>
                   </div>

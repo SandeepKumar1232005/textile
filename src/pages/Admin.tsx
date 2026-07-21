@@ -80,7 +80,7 @@ export function Admin() {
     if (!currentProduct || !currentProduct.name) return;
     
     const sellingPrice = Number(currentProduct.sellingPrice ?? currentProduct.price ?? 0);
-    const originalPrice = currentProduct.originalPrice !== undefined && currentProduct.originalPrice !== null && currentProduct.originalPrice !== ('' as any)
+    let originalPrice = currentProduct.originalPrice !== undefined && currentProduct.originalPrice !== null && currentProduct.originalPrice !== ('' as any)
       ? Number(currentProduct.originalPrice)
       : undefined;
 
@@ -89,16 +89,16 @@ export function Admin() {
       return;
     }
 
-    if (originalPrice !== undefined && originalPrice > 0 && sellingPrice > originalPrice) {
-      alert(`Validation Error: Selling Price (₹${sellingPrice}) cannot exceed Original Price (MRP ₹${originalPrice}).`);
-      return;
+    // If Original Price is less than or equal to Selling Price, ignore originalPrice on save so it doesn't block saving
+    if (originalPrice !== undefined && originalPrice <= sellingPrice) {
+      originalPrice = undefined;
     }
 
     const payload = {
       ...currentProduct,
       sellingPrice,
       price: sellingPrice,
-      originalPrice: originalPrice && originalPrice > 0 ? originalPrice : undefined,
+      originalPrice: originalPrice && originalPrice > sellingPrice ? originalPrice : undefined,
     };
     
     try {
@@ -544,8 +544,29 @@ Return only the raw JSON. Do not write markdown, code blocks (such as \`\`\`json
                   (currentProduct?.sellingPrice ?? currentProduct?.price) && 
                   Number(currentProduct?.sellingPrice ?? currentProduct?.price) > Number(currentProduct?.originalPrice)
                 ) && (
-                  <div className="md:col-span-2 p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-sm font-medium">
-                    ⚠️ Validation Error: Selling Price (₹{currentProduct?.sellingPrice ?? currentProduct?.price}) cannot exceed Original Price (MRP ₹{currentProduct?.originalPrice}).
+                  <div className="md:col-span-2 p-3.5 bg-amber-50 border border-amber-200 text-amber-900 text-xs rounded-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base shrink-0">💡</span>
+                      <span>
+                        Selling price (<strong>₹{currentProduct?.sellingPrice ?? currentProduct?.price}</strong>) is higher than Original Price (MRP <strong>₹{currentProduct?.originalPrice}</strong>).
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setCurrentProduct({ ...currentProduct, originalPrice: undefined })}
+                        className="px-2.5 py-1 bg-white border border-amber-300 text-amber-900 rounded-sm text-xs font-semibold hover:bg-amber-100 transition-colors cursor-pointer"
+                      >
+                        Clear MRP
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCurrentProduct({ ...currentProduct, originalPrice: Number(currentProduct?.sellingPrice ?? currentProduct?.price) })}
+                        className="px-2.5 py-1 bg-[#6E1F2B] text-white rounded-sm text-xs font-semibold hover:bg-[#581822] transition-colors cursor-pointer"
+                      >
+                        Set MRP = ₹{currentProduct?.sellingPrice ?? currentProduct?.price}
+                      </button>
+                    </div>
                   </div>
                 )}
 

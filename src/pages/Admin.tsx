@@ -291,7 +291,7 @@ Return only the raw JSON. Do not write markdown, code blocks (such as \`\`\`json
             <div className="w-8 h-8 bg-brand-gold text-brand-white flex items-center justify-center rounded-sm text-sm">M</div>
             Admin Dashboard
           </h1>
-          <button onClick={handleLogout} className="flex items-center gap-2 text-sm text-gray-300 hover:text-white transition-colors">
+          <button onClick={handleLogout} className="flex items-center gap-2 text-sm text-gray-300 hover:text-white transition-colors cursor-pointer">
             <LogOut className="w-4 h-4" /> Logout
           </button>
         </div>
@@ -310,7 +310,7 @@ Return only the raw JSON. Do not write markdown, code blocks (such as \`\`\`json
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowCategoryMgr(!showCategoryMgr)}
-                  className="px-4 py-2 border border-gray-300 text-gray-700 bg-white rounded-sm font-medium hover:bg-gray-50 transition-colors text-sm"
+                  className="px-4 py-2 border border-gray-300 text-gray-700 bg-white rounded-sm font-medium hover:bg-gray-50 transition-colors text-sm cursor-pointer"
                 >
                   {showCategoryMgr ? 'View Products' : 'Manage Categories'}
                 </button>
@@ -325,7 +325,7 @@ Return only the raw JSON. Do not write markdown, code blocks (such as \`\`\`json
                       });
                       setIsEditing(true);
                     }}
-                    className="px-4 py-2 bg-brand-black text-white rounded-sm font-medium hover:bg-gray-800 transition-colors flex items-center gap-2 text-sm"
+                    className="px-4 py-2 bg-brand-black text-white rounded-sm font-medium hover:bg-gray-800 transition-colors flex items-center gap-2 text-sm cursor-pointer"
                   >
                     <Plus className="w-4 h-4" /> Add Product
                   </button>
@@ -349,7 +349,7 @@ Return only the raw JSON. Do not write markdown, code blocks (such as \`\`\`json
                   />
                   <button
                     type="submit"
-                    className="px-6 py-2 bg-brand-black text-white rounded-sm font-medium hover:bg-gray-800 transition-colors text-sm"
+                    className="px-6 py-2 bg-brand-black text-white rounded-sm font-medium hover:bg-gray-800 transition-colors text-sm cursor-pointer"
                   >
                     Add Category
                   </button>
@@ -366,7 +366,7 @@ Return only the raw JSON. Do not write markdown, code blocks (such as \`\`\`json
                           <span className="font-medium text-brand-black">{cat}</span>
                           <button
                             onClick={() => handleDeleteCategory(cat)}
-                            className="text-red-500 hover:text-red-700 transition-colors p-1"
+                            className="text-red-500 hover:text-red-700 transition-colors p-1 cursor-pointer"
                             title="Delete Category"
                           >
                             <Trash2 className="w-4.5 h-4.5" />
@@ -422,10 +422,10 @@ Return only the raw JSON. Do not write markdown, code blocks (such as \`\`\`json
                           </td>
                           <td className="p-4 text-right">
                             <div className="flex items-center justify-end gap-3">
-                              <button onClick={() => { setCurrentProduct(p); setIsEditing(true); }} className="text-blue-600 hover:text-blue-800 p-1">
+                              <button onClick={() => { setCurrentProduct(p); setIsEditing(true); }} className="text-blue-600 hover:text-blue-800 p-1 cursor-pointer" title="Edit Product">
                                 <Edit2 className="w-4 h-4" />
                               </button>
-                              <button onClick={() => handleDelete(p.id)} className="text-red-600 hover:text-red-800 p-1">
+                              <button onClick={() => handleDelete(p.id)} className="text-red-600 hover:text-red-800 p-1 cursor-pointer" title="Delete Product">
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
@@ -466,7 +466,7 @@ Return only the raw JSON. Do not write markdown, code blocks (such as \`\`\`json
                     />
                   </label>
                 )}
-                <button onClick={() => setIsEditing(false)} className="text-gray-400 hover:text-gray-600">
+                <button onClick={() => setIsEditing(false)} className="text-gray-400 hover:text-gray-600 cursor-pointer">
                   <X className="w-6 h-6" />
                 </button>
               </div>
@@ -610,7 +610,7 @@ Return only the raw JSON. Do not write markdown, code blocks (such as \`\`\`json
                           key={sz}
                           type="button"
                           onClick={() => setCurrentProduct({...currentProduct, size: sz})}
-                          className={`px-2 py-1 text-[10px] border font-medium rounded-sm transition-colors ${currentProduct.size === sz ? 'bg-brand-black text-white border-brand-black' : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'}`}
+                          className={`px-2 py-1 text-[10px] border font-medium rounded-sm transition-colors cursor-pointer ${currentProduct.size === sz ? 'bg-brand-black text-white border-brand-black' : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'}`}
                         >
                           {sz}
                         </button>
@@ -667,14 +667,14 @@ Return only the raw JSON. Do not write markdown, code blocks (such as \`\`\`json
                             newImages.splice(idx, 1);
                             setCurrentProduct({...currentProduct, images: newImages});
                           }}
-                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                         >
                           <X className="w-3 h-3" />
                         </button>
                       </div>
                     ))}
                     
-                    <label className="w-24 h-24 rounded border border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 hover:text-brand-black hover:border-brand-black cursor-pointer transition-colors">
+                    <label className={`w-24 h-24 rounded border border-dashed flex flex-col items-center justify-center transition-colors ${uploadingImage ? 'border-gray-200 text-gray-300 cursor-not-allowed' : 'border-gray-300 text-gray-400 hover:text-brand-black hover:border-brand-black cursor-pointer'}`}>
                       {uploadingImage ? <span className="text-xs">Loading...</span> : (
                         <>
                           <Plus className="w-6 h-6 mb-1" />
@@ -692,14 +692,14 @@ Return only the raw JSON. Do not write markdown, code blocks (such as \`\`\`json
                 <button 
                   type="button" 
                   onClick={() => setIsEditing(false)}
-                  className="px-6 py-2 border border-gray-300 rounded-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="px-6 py-2 border border-gray-300 rounded-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit"
                   disabled={uploadingImage}
-                  className="px-8 py-2 bg-brand-black text-white rounded-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50"
+                  className="px-8 py-2 bg-brand-black text-white rounded-sm font-medium hover:bg-gray-800 transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Save Product
                 </button>

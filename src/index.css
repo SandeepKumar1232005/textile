@@ -17,6 +17,14 @@ body {
   color: var(--color-brand-black);
 }
 
+button, [role="button"], input[type="submit"], input[type="button"] {
+  cursor: pointer;
+}
+
+button:disabled, input:disabled {
+  cursor: not-allowed !important;
+}
+
 /* Respect prefers-reduced-motion for accessibility */
 @media (prefers-reduced-motion: reduce) {
   *,

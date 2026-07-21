@@ -1,37 +1,23 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { getProduct, getProducts, buildWhatsAppLink } from '../lib/store';
+import { buildWhatsAppLink } from '../lib/store';
+import { useProductDetail, useRelatedProducts } from '../hooks/useProducts';
 import { Product } from '../types';
 import { formatPrice } from '../lib/utils';
 import { PriceDisplay } from '../components/PriceDisplay';
+import { ProductCardSkeleton } from '../components/ProductCardSkeleton';
 import { ArrowLeft, MessageCircle, Phone } from 'lucide-react';
 
 export function ProductDetail() {
   const { id } = useParams<{ id: string }>();
-  const [product, setProduct] = useState<Product | null>(null);
-  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: product, isLoading: loading } = useProductDetail(id);
+  const { data: relatedProducts = [], isLoading: loadingRelated } = useRelatedProducts(product?.category, product?.id);
   const [activeImage, setActiveImage] = useState(0);
 
+  // Reset active image when product changes
   useEffect(() => {
-    async function load() {
-      if (!id) return;
-      setLoading(true);
-      try {
-        const data = await getProduct(id);
-        setProduct(data);
-        if (data) {
-          const all = await getProducts();
-          setRelatedProducts(all.filter(p => p.category === data.category && p.id !== id).slice(0, 4));
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
+    setActiveImage(0);
     window.scrollTo(0, 0);
   }, [id]);
 
@@ -87,7 +73,11 @@ export function ProductDetail() {
               {product.images && product.images[activeImage] ? (
                 <img 
                   src={product.images[activeImage]} 
-                  alt={product.name} 
+                  alt={product.name}
+                  loading="eager"
+                  decoding="async"
+                  width={600}
+                  height={750}
                   className="w-full h-full object-contain transition-transform duration-500 ease-out hover:scale-[1.04]"
                 />
               ) : (
@@ -102,7 +92,7 @@ export function ProductDetail() {
                     onClick={() => setActiveImage(idx)}
                     className={`shrink-0 w-20 h-24 border transition-colors snap-center ${activeImage === idx ? 'border-[#B8912F]' : 'border-[#EAEAEA] hover:border-gray-300'}`}
                   >
-                    <img src={img} alt="" className="w-full h-full object-cover" />
+                    <img src={img} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>
@@ -177,7 +167,12 @@ export function ProductDetail() {
         </div>
 
         {/* Related Products */}
-        {relatedProducts.length > 0 && (
+        {loadingRelated ? (
+          <div className="mt-24 pt-12 border-t border-[#EAEAEA]">
+            <h2 className="text-2xl font-medium tracking-tight text-brand-black mb-8">Related Products</h2>
+            <ProductCardSkeleton count={4} />
+          </div>
+        ) : relatedProducts.length > 0 ? (
           <motion.div
             className="mt-24 pt-12 border-t border-[#EAEAEA]"
             initial={{ opacity: 0, y: 16 }}
@@ -203,7 +198,11 @@ export function ProductDetail() {
                       {p.images && p.images[0] ? (
                         <img 
                           src={p.images[0]} 
-                          alt={p.name} 
+                          alt={p.name}
+                          loading="lazy"
+                          decoding="async"
+                          width={400}
+                          height={500}
                           className="w-full h-full object-contain transition-transform duration-500 ease-out group-hover:scale-[1.06]"
                         />
                       ) : (
@@ -225,7 +224,7 @@ export function ProductDetail() {
               ))}
             </div>
           </motion.div>
-        )}
+        ) : null}
       </div>
     </div>
   );

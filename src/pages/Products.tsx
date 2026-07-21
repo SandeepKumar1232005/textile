@@ -1,46 +1,28 @@
 import { Link, useSearchParams } from 'react-router-dom';
 import { Search, ChevronDown } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion } from 'motion/react';
-import { getProducts, getCategories } from '../lib/store';
+import { useProductListing, useCategories } from '../hooks/useProducts';
 import { Product } from '../types';
 import { formatPrice } from '../lib/utils';
 import { PriceDisplay, DiscountBadge } from '../components/PriceDisplay';
+import { ProductCardSkeleton } from '../components/ProductCardSkeleton';
 
 export function Products() {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialCategory = searchParams.get('category') || '';
   
-  const [products, setProducts] = useState<Product[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: products = [], isLoading: loading } = useProductListing();
+  const { data: categoriesData = [] } = useCategories();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [sortBy, setSortBy] = useState('');
 
-  const [categories, setCategories] = useState<string[]>(['All']);
+  const categories = useMemo(() => ['All', ...categoriesData], [categoriesData]);
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const [productsData, categoriesData] = await Promise.all([
-          getProducts(),
-          getCategories()
-        ]);
-        setProducts(productsData);
-        setFilteredProducts(productsData);
-        setCategories(['All', ...categoriesData]);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, []);
-
-  useEffect(() => {
+  // Derive filtered products from cached data — no extra state needed
+  const filteredProducts = useMemo(() => {
     let result = products;
 
     if (searchTerm) {
@@ -57,8 +39,8 @@ export function Products() {
       result = [...result].sort((a, b) => (b.sellingPrice ?? b.price) - (a.sellingPrice ?? a.price));
     }
 
-    setFilteredProducts(result);
-  }, [searchTerm, selectedCategory, sortBy, products]);
+    return result;
+  }, [products, searchTerm, selectedCategory, sortBy]);
 
   return (
     <div className="min-h-screen bg-white max-w-7xl mx-auto px-4 sm:px-10 py-10">
@@ -103,11 +85,7 @@ export function Products() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 animate-pulse">
-          {[1, 2, 3, 4, 5, 6].map(i => (
-            <div key={i} className="aspect-[4/5] bg-gray-100 border border-[#EAEAEA]" />
-          ))}
-        </div>
+        <ProductCardSkeleton count={6} columns="grid-cols-2 md:grid-cols-3 lg:grid-cols-4" />
       ) : filteredProducts.length > 0 ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
           {filteredProducts.map((product, index) => (
@@ -158,6 +136,9 @@ export function Products() {
                       src={product.images[0]} 
                       alt={product.name} 
                       loading="lazy"
+                      decoding="async"
+                      width={400}
+                      height={500}
                       className="w-full h-full object-contain transition-transform duration-500 ease-out group-hover:scale-[1.06]"
                     />
                   ) : (

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { getProducts, createProduct, updateProduct, deleteProduct, getCategories, createCategory, deleteCategory } from '../lib/store';
 import { Product } from '../types';
 import { supabase } from '../lib/supabase';
+import { queryClient } from '../lib/queryClient';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, X, Image as ImageIcon, LogOut, Sparkles } from 'lucide-react';
 import { formatPrice, resizeImageFile } from '../lib/utils';
@@ -124,6 +125,7 @@ export function Admin() {
       setIsEditing(false);
       setCurrentProduct(null);
       await loadData();
+      queryClient.invalidateQueries({ queryKey: ['products'] });
       window.scrollTo({ top: 0, behavior: 'smooth' });
       alert('✨ Product saved successfully!');
     } catch (err: any) {
@@ -137,6 +139,7 @@ export function Admin() {
       try {
         await deleteProduct(id);
         await loadData();
+        queryClient.invalidateQueries({ queryKey: ['products'] });
       } catch (err) {
         console.error(err);
         alert('Error deleting product');
@@ -152,6 +155,7 @@ export function Admin() {
       await createCategory(name);
       setNewCategoryName('');
       loadData();
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
       alert(`Category "${name}" successfully added!`);
     } catch (err: any) {
       console.error(err);
@@ -164,6 +168,7 @@ export function Admin() {
       try {
         await deleteCategory(name);
         loadData();
+        queryClient.invalidateQueries({ queryKey: ['categories'] });
       } catch (err: any) {
         console.error(err);
         alert('Error deleting category: ' + (err.message || err));

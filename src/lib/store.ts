@@ -99,6 +99,9 @@ function mapProductToDb(product: any) {
   return data;
 }
 
+// Columns needed for product card views (excludes description, owner_phone, size for lighter payload)
+const PRODUCT_LISTING_COLUMNS = 'id,name,category,price,selling_price,original_price,color_combination,material,images,stock_status,created_at,updated_at';
+
 export async function getProducts(): Promise<Product[]> {
   const { data, error } = await supabase
     .from(PRODUCTS_TABLE)
@@ -106,6 +109,50 @@ export async function getProducts(): Promise<Product[]> {
     .order('created_at', { ascending: false });
 
   if (error) throw error;
+  return (data || []).map(mapProductFromDb);
+}
+
+// Slim query for listing pages — fetches only card-display columns with optional limit
+export async function getProductsForListing(limit?: number): Promise<Product[]> {
+  let query = supabase
+    .from(PRODUCTS_TABLE)
+    .select(PRODUCT_LISTING_COLUMNS)
+    .order('created_at', { ascending: false });
+
+  if (limit) {
+    query = query.limit(limit);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    // Fallback to select('*') if slim columns fail (e.g. selling_price not in DB yet)
+    if (error.message?.includes('selling_price') || error.message?.includes('original_price')) {
+      return getProducts().then(products => limit ? products.slice(0, limit) : products);
+    }
+    throw error;
+  }
+  return (data || []).map(mapProductFromDb);
+}
+
+// Targeted query for related products — fetches only 4 rows server-side
+export async function getRelatedProducts(category: string, excludeId: string, limit: number = 4): Promise<Product[]> {
+  const { data, error } = await supabase
+    .from(PRODUCTS_TABLE)
+    .select(PRODUCT_LISTING_COLUMNS)
+    .eq('category', category)
+    .neq('id', excludeId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    // Fallback if slim columns fail
+    if (error.message?.includes('selling_price') || error.message?.includes('original_price')) {
+      const all = await getProducts();
+      return all.filter(p => p.category === category && p.id !== excludeId).slice(0, limit);
+    }
+    throw error;
+  }
   return (data || []).map(mapProductFromDb);
 }
 

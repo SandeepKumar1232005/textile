@@ -1,36 +1,17 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, MessageCircle } from 'lucide-react';
-import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import { getProducts, getCategories } from '../lib/store';
+import { useProductListing, useCategories } from '../hooks/useProducts';
 import { Product } from '../types';
 import { formatPrice } from '../lib/utils';
 import { PriceDisplay, DiscountBadge } from '../components/PriceDisplay';
+import { ProductCardSkeleton } from '../components/ProductCardSkeleton';
 
 export function Home() {
-  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
-  const [allProducts, setAllProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function load() {
-      try {
-        const [productsData, categoriesData] = await Promise.all([
-          getProducts(),
-          getCategories()
-        ]);
-        setFeaturedProducts(productsData.slice(0, 4));
-        setAllProducts(productsData);
-        setCategories(categoriesData);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, []);
+  // Each section fetches independently — no Promise.all blocking
+  const { data: featuredProducts = [], isLoading: loadingProducts } = useProductListing(4);
+  const { data: allProducts = [] } = useProductListing();
+  const { data: categories = [], isLoading: loadingCategories } = useCategories();
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -106,12 +87,8 @@ export function Home() {
           </Link>
         </div>
 
-        {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-8 animate-pulse">
-            {[1, 2, 3, 4].map(i => (
-              <div key={i} className="aspect-[4/5] bg-gray-100 border border-[#EAEAEA] rounded-lg md:rounded-none" />
-            ))}
-          </div>
+        {loadingProducts ? (
+          <ProductCardSkeleton count={4} />
         ) : featuredProducts.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-8">
             {featuredProducts.map((product, index) => (
@@ -160,8 +137,11 @@ export function Home() {
                     {product.images && product.images[0] ? (
                       <img 
                         src={product.images[0]} 
-                        alt={product.name} 
-                        loading="lazy"
+                        alt={product.name}
+                        loading={index < 2 ? 'eager' : 'lazy'}
+                        decoding="async"
+                        width={400}
+                        height={500}
                         className="w-full h-full object-contain transition-transform duration-500 ease-out group-hover:scale-[1.06]"
                       />
                     ) : (
@@ -202,34 +182,44 @@ export function Home() {
       >
         <div className="max-w-7xl mx-auto">
           <h2 className="text-xl md:text-2xl font-medium text-brand-black mb-6 md:mb-8 text-center tracking-tight">Browse by Category</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-            {categories.map((category, index) => {
-              const hasProducts = allProducts.some(p => p.category === category);
-              return (
-                <motion.div
-                  key={category}
-                  initial={{ opacity: 0, y: 12 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: '-50px' }}
-                  transition={{ duration: 0.35, delay: index * 0.06, ease: 'easeOut' }}
-                >
-                  {hasProducts ? (
-                    <Link 
-                      to={`/products?category=${category}`}
-                      className="block bg-white py-8 px-6 border border-[#EAEAEA] text-center hover:border-brand-gold transition-colors"
-                    >
-                      <h3 className="font-semibold text-brand-black uppercase tracking-wider text-sm">{category}</h3>
-                    </Link>
-                  ) : (
-                    <div className="bg-white py-8 px-6 border border-[#EAEAEA] text-center relative opacity-80">
-                      <h3 className="font-medium text-gray-400 uppercase tracking-wider text-sm mb-1">{category}</h3>
-                      <span className="text-[10px] text-brand-gold font-bold uppercase tracking-widest block">Coming Soon</span>
-                    </div>
-                  )}
-                </motion.div>
-              );
-            })}
-          </div>
+          {loadingCategories ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 animate-pulse">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="bg-white py-8 px-6 border border-[#EAEAEA]">
+                  <div className="h-4 bg-gray-100 rounded w-2/3 mx-auto" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+              {categories.map((category, index) => {
+                const hasProducts = allProducts.some(p => p.category === category);
+                return (
+                  <motion.div
+                    key={category}
+                    initial={{ opacity: 0, y: 12 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: '-50px' }}
+                    transition={{ duration: 0.35, delay: index * 0.06, ease: 'easeOut' }}
+                  >
+                    {hasProducts ? (
+                      <Link 
+                        to={`/products?category=${category}`}
+                        className="block bg-white py-8 px-6 border border-[#EAEAEA] text-center hover:border-brand-gold transition-colors"
+                      >
+                        <h3 className="font-semibold text-brand-black uppercase tracking-wider text-sm">{category}</h3>
+                      </Link>
+                    ) : (
+                      <div className="bg-white py-8 px-6 border border-[#EAEAEA] text-center relative opacity-80">
+                        <h3 className="font-medium text-gray-400 uppercase tracking-wider text-sm mb-1">{category}</h3>
+                        <span className="text-[10px] text-brand-gold font-bold uppercase tracking-widest block">Coming Soon</span>
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </motion.section>
     </div>

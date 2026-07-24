@@ -53,10 +53,10 @@ function mapProductFromDb(data: any): Product {
     description: cleanDescription,
     images: data.images || [],
     stockStatus: data.stock_status,
-    ownerPhone: data.owner_phone,
+    ownerPhone: data.owner_phone || '',
     size: data.size || '',
-    createdAt: new Date(data.created_at),
-    updatedAt: new Date(data.updated_at),
+    createdAt: data.created_at ? new Date(data.created_at) : new Date(),
+    updatedAt: data.updated_at ? new Date(data.updated_at) : new Date(),
   };
 }
 
@@ -99,24 +99,59 @@ function mapProductToDb(product: any) {
   return data;
 }
 
-// Columns needed for product card views (excludes description, owner_phone, size for lighter payload)
-const PRODUCT_LISTING_COLUMNS = 'id,name,category,price,selling_price,original_price,color_combination,material,images,stock_status,created_at,updated_at';
+// ---------------------------------------------------------------------------
+// Column sets — each query fetches ONLY the columns it needs
+// ---------------------------------------------------------------------------
 
+// Card view: used for product grids on Home/Products pages.
+// Fetches only the FIRST image (via images column) but NOT description, owner_phone, size.
+// NOTE: The `images` column is still fetched because we need images[0] for thumbnails.
+// Once a `thumbnail` column is added to the DB, switch to PRODUCT_CARD_COLUMNS_V2.
+const PRODUCT_CARD_COLUMNS = 'id,name,category,price,selling_price,original_price,color_combination,material,images,stock_status,created_at,updated_at';
+
+// Full detail: all columns needed for the product detail page
+const PRODUCT_DETAIL_COLUMNS = 'id,name,category,price,selling_price,original_price,color_combination,material,description,images,stock_status,owner_phone,size,created_at,updated_at';
+
+// Admin listing: same as card columns (admin table only shows thumbnail + basic info)
+const ADMIN_LISTING_COLUMNS = PRODUCT_CARD_COLUMNS;
+
+// ---------------------------------------------------------------------------
+// Queries
+// ---------------------------------------------------------------------------
+
+/**
+ * Get ALL products — used only by Admin for full management.
+ * Uses explicit columns instead of select('*').
+ */
 export async function getProducts(): Promise<Product[]> {
   const { data, error } = await supabase
     .from(PRODUCTS_TABLE)
-    .select('*')
+    .select(ADMIN_LISTING_COLUMNS)
     .order('created_at', { ascending: false });
 
-  if (error) throw error;
+  if (error) {
+    // Fallback to select('*') if any column doesn't exist yet
+    if (error.message?.includes('selling_price') || error.message?.includes('original_price')) {
+      const fallback = await supabase
+        .from(PRODUCTS_TABLE)
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (fallback.error) throw fallback.error;
+      return (fallback.data || []).map(mapProductFromDb);
+    }
+    throw error;
+  }
   return (data || []).map(mapProductFromDb);
 }
 
-// Slim query for listing pages — fetches only card-display columns with optional limit
+/**
+ * Slim query for listing pages — fetches only card-display columns with optional limit.
+ * Used by Home (limit=12) and Products (paginated).
+ */
 export async function getProductsForListing(limit?: number): Promise<Product[]> {
   let query = supabase
     .from(PRODUCTS_TABLE)
-    .select(PRODUCT_LISTING_COLUMNS)
+    .select(PRODUCT_CARD_COLUMNS)
     .order('created_at', { ascending: false });
 
   if (limit) {
@@ -128,18 +163,70 @@ export async function getProductsForListing(limit?: number): Promise<Product[]> 
   if (error) {
     // Fallback to select('*') if slim columns fail (e.g. selling_price not in DB yet)
     if (error.message?.includes('selling_price') || error.message?.includes('original_price')) {
-      return getProducts().then(products => limit ? products.slice(0, limit) : products);
+      const fallback = await supabase
+        .from(PRODUCTS_TABLE)
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (fallback.error) throw fallback.error;
+      const all = (fallback.data || []).map(mapProductFromDb);
+      return limit ? all.slice(0, limit) : all;
     }
     throw error;
   }
   return (data || []).map(mapProductFromDb);
 }
 
-// Targeted query for related products — fetches only 4 rows server-side
-export async function getRelatedProducts(category: string, excludeId: string, limit: number = 4): Promise<Product[]> {
+/**
+ * Paginated products query — fetches a specific page of products.
+ * Supports optional category filter and search term for server-side filtering.
+ */
+export async function getProductsPaginated(
+  page: number,
+  pageSize: number,
+  category?: string,
+  search?: string,
+): Promise<{ products: Product[]; hasMore: boolean }> {
+  const from = page * pageSize;
+  const to = from + pageSize; // fetch one extra to know if there's a next page
+
+  let query = supabase
+    .from(PRODUCTS_TABLE)
+    .select(PRODUCT_CARD_COLUMNS)
+    .order('created_at', { ascending: false })
+    .range(from, to);
+
+  if (category) {
+    query = query.eq('category', category);
+  }
+
+  if (search) {
+    query = query.ilike('name', `%${search}%`);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    // Fallback: fetch all and slice manually
+    const all = await getProductsForListing();
+    let filtered = all;
+    if (category) filtered = filtered.filter(p => p.category === category);
+    if (search) filtered = filtered.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
+    const sliced = filtered.slice(from, from + pageSize);
+    return { products: sliced, hasMore: from + pageSize < filtered.length };
+  }
+
+  const items = (data || []).map(mapProductFromDb);
+  const hasMore = items.length > pageSize;
+  return { products: items.slice(0, pageSize), hasMore };
+}
+
+/**
+ * Targeted query for related products — fetches limited rows server-side.
+ */
+export async function getRelatedProducts(category: string, excludeId: string, limit: number = 8): Promise<Product[]> {
   const { data, error } = await supabase
     .from(PRODUCTS_TABLE)
-    .select(PRODUCT_LISTING_COLUMNS)
+    .select(PRODUCT_CARD_COLUMNS)
     .eq('category', category)
     .neq('id', excludeId)
     .order('created_at', { ascending: false })
@@ -148,7 +235,7 @@ export async function getRelatedProducts(category: string, excludeId: string, li
   if (error) {
     // Fallback if slim columns fail
     if (error.message?.includes('selling_price') || error.message?.includes('original_price')) {
-      const all = await getProducts();
+      const all = await getProductsForListing();
       return all.filter(p => p.category === category && p.id !== excludeId).slice(0, limit);
     }
     throw error;
@@ -156,15 +243,54 @@ export async function getRelatedProducts(category: string, excludeId: string, li
   return (data || []).map(mapProductFromDb);
 }
 
+/**
+ * Full single-product query for the detail page — includes description, images, owner_phone, size.
+ */
 export async function getProduct(id: string): Promise<Product | null> {
   const { data, error } = await supabase
     .from(PRODUCTS_TABLE)
-    .select('*')
+    .select(PRODUCT_DETAIL_COLUMNS)
     .eq('id', id)
     .maybeSingle();
 
-  if (error) throw error;
+  if (error) {
+    // Fallback to select('*') if explicit columns fail
+    if (error.message?.includes('selling_price') || error.message?.includes('original_price')) {
+      const fallback = await supabase
+        .from(PRODUCTS_TABLE)
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+      if (fallback.error) throw fallback.error;
+      return fallback.data ? mapProductFromDb(fallback.data) : null;
+    }
+    throw error;
+  }
   return data ? mapProductFromDb(data) : null;
+}
+
+/**
+ * Lightweight query: get the count of products per category.
+ * Returns ~200 bytes instead of ~120 MB. Used on Home page to show "Coming Soon" badges.
+ */
+export async function getProductCountByCategory(): Promise<Record<string, number>> {
+  // Supabase doesn't support GROUP BY directly, so we fetch only the category column
+  // and count client-side. This is ~200 products × ~20 bytes = ~4 KB — trivial.
+  const { data, error } = await supabase
+    .from(PRODUCTS_TABLE)
+    .select('category');
+
+  if (error) {
+    console.warn('Failed to fetch category counts:', error.message);
+    return {};
+  }
+
+  const counts: Record<string, number> = {};
+  for (const row of data || []) {
+    const cat = (row as any).category;
+    if (cat) counts[cat] = (counts[cat] || 0) + 1;
+  }
+  return counts;
 }
 
 export async function createProduct(product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
@@ -292,4 +418,3 @@ export async function deleteCategory(name: string): Promise<void> {
 
   if (error) throw error;
 }
-

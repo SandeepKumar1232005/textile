@@ -1,12 +1,35 @@
-import { useQuery } from '@tanstack/react-query';
-import { getProductsForListing, getProduct, getRelatedProducts, getCategories } from '../lib/store';
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
+import {
+  getProductsForListing,
+  getProductsPaginated,
+  getProduct,
+  getRelatedProducts,
+  getCategories,
+  getProductCountByCategory,
+} from '../lib/store';
 import { Product } from '../types';
 
-// Cached product listing for Home / Products pages
+const PAGE_SIZE = 12;
+
+// Cached product listing for Home (featured) — limited count
 export function useProductListing(limit?: number) {
   return useQuery<Product[]>({
     queryKey: limit ? ['products', 'listing', limit] : ['products', 'listing'],
     queryFn: () => getProductsForListing(limit),
+  });
+}
+
+/**
+ * Paginated product listing with "Load More" support.
+ * Fetches PAGE_SIZE products per page, with optional category and search filters.
+ */
+export function usePaginatedProducts(category?: string, search?: string) {
+  return useInfiniteQuery({
+    queryKey: ['products', 'paginated', category || '', search || ''],
+    queryFn: ({ pageParam = 0 }) => getProductsPaginated(pageParam, PAGE_SIZE, category, search),
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.hasMore ? allPages.length : undefined,
+    initialPageParam: 0,
   });
 }
 
@@ -19,13 +42,13 @@ export function useProductDetail(id: string | undefined) {
   });
 }
 
-// Cached related products — targeted server-side query
+// Cached related products — targeted server-side query, limited to 8
 export function useRelatedProducts(category: string | undefined, excludeId: string | undefined) {
   return useQuery<Product[]>({
     queryKey: ['products', 'related', category, excludeId],
     queryFn: () =>
       category && excludeId
-        ? getRelatedProducts(category, excludeId, 15)
+        ? getRelatedProducts(category, excludeId, 8)
         : Promise.resolve([]),
     enabled: !!category && !!excludeId,
   });
@@ -37,5 +60,17 @@ export function useCategories() {
     queryKey: ['categories'],
     queryFn: getCategories,
     staleTime: 5 * 60_000, // Categories change rarely — 5 min stale time
+  });
+}
+
+/**
+ * Lightweight category product count — returns { "Bedsheets": 45, "Sarees": 12, ... }
+ * Used on Home page to show "Coming Soon" badges without downloading all products.
+ */
+export function useProductCountByCategory() {
+  return useQuery<Record<string, number>>({
+    queryKey: ['products', 'categoryCount'],
+    queryFn: getProductCountByCategory,
+    staleTime: 5 * 60_000,
   });
 }

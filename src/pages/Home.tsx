@@ -1,16 +1,17 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, MessageCircle } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useProductListing, useCategories } from '../hooks/useProducts';
+import { useProductListing, useCategories, useProductCountByCategory } from '../hooks/useProducts';
 import { Product } from '../types';
 import { formatPrice } from '../lib/utils';
 import { PriceDisplay, DiscountBadge } from '../components/PriceDisplay';
 import { ProductCardSkeleton } from '../components/ProductCardSkeleton';
 
 export function Home() {
-  // Each section fetches independently — no Promise.all blocking
-  const { data: featuredProducts = [], isLoading: loadingProducts } = useProductListing(4);
-  const { data: allProducts = [] } = useProductListing();
+  // Featured products: only 12, lightweight card columns
+  const { data: featuredProducts = [], isLoading: loadingProducts } = useProductListing(12);
+  // Lightweight category count: ~4 KB instead of ~120 MB (no images, no product data)
+  const { data: categoryCounts = {} } = useProductCountByCategory();
   const { data: categories = [], isLoading: loadingCategories } = useCategories();
 
   return (
@@ -193,7 +194,7 @@ export function Home() {
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
               {categories.map((category, index) => {
-                const hasProducts = allProducts.some(p => p.category === category);
+                const hasProducts = (categoryCounts[category] || 0) > 0;
                 return (
                   <motion.div
                     key={category}

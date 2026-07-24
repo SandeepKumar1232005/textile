@@ -1,8 +1,9 @@
 import { Link, useSearchParams } from 'react-router-dom';
-import { Search, ChevronDown } from 'lucide-react';
+import { Search, ChevronDown, Loader2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { motion } from 'motion/react';
-import { useProductListing, useCategories } from '../hooks/useProducts';
+import { usePaginatedProducts, useCategories } from '../hooks/useProducts';
+import { useDebounce } from '../hooks/useDebounce';
 import { Product } from '../types';
 import { formatPrice } from '../lib/utils';
 import { PriceDisplay, DiscountBadge } from '../components/PriceDisplay';
@@ -12,35 +13,46 @@ export function Products() {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialCategory = searchParams.get('category') || '';
   
-  const { data: products = [], isLoading: loading } = useProductListing();
   const { data: categoriesData = [] } = useCategories();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [sortBy, setSortBy] = useState('');
 
+  // Debounce search to avoid a query on every keystroke
+  const debouncedSearch = useDebounce(searchTerm, 400);
+
+  // Paginated query — fetches 12 products at a time, server-side filtered
+  const {
+    data,
+    isLoading: loading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = usePaginatedProducts(
+    selectedCategory || undefined,
+    debouncedSearch || undefined,
+  );
+
   const categories = useMemo(() => ['All', ...categoriesData], [categoriesData]);
 
-  // Derive filtered products from cached data — no extra state needed
-  const filteredProducts = useMemo(() => {
-    let result = products;
+  // Flatten paginated results into a single array
+  const products = useMemo(() => {
+    if (!data?.pages) return [];
+    return data.pages.flatMap(page => page.products);
+  }, [data]);
 
-    if (searchTerm) {
-      result = result.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
-    }
-
-    if (selectedCategory && selectedCategory !== 'All') {
-      result = result.filter(p => p.category === selectedCategory);
-    }
-
+  // Client-side sorting (applied on already-loaded data — no extra query)
+  const sortedProducts = useMemo(() => {
+    if (!sortBy) return products;
+    const sorted = [...products];
     if (sortBy === 'price-low') {
-      result = [...result].sort((a, b) => (a.sellingPrice ?? a.price) - (b.sellingPrice ?? b.price));
+      sorted.sort((a, b) => (a.sellingPrice ?? a.price) - (b.sellingPrice ?? b.price));
     } else if (sortBy === 'price-high') {
-      result = [...result].sort((a, b) => (b.sellingPrice ?? b.price) - (a.sellingPrice ?? a.price));
+      sorted.sort((a, b) => (b.sellingPrice ?? b.price) - (a.sellingPrice ?? a.price));
     }
-
-    return result;
-  }, [products, searchTerm, selectedCategory, sortBy]);
+    return sorted;
+  }, [products, sortBy]);
 
   return (
     <div className="min-h-screen bg-white max-w-7xl mx-auto px-4 sm:px-10 py-10">
@@ -86,81 +98,103 @@ export function Products() {
 
       {loading ? (
         <ProductCardSkeleton count={6} columns="grid-cols-2 md:grid-cols-3 lg:grid-cols-4" />
-      ) : filteredProducts.length > 0 ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-          {filteredProducts.map((product, index) => (
-            <motion.div
-              key={product.id}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-40px' }}
-              transition={{ duration: 0.35, delay: Math.min(index % 4, 3) * 0.04, ease: 'easeOut' }}
-            >
-              <Link 
-                to={`/product/${product.id}`}
-                className="group block cursor-pointer"
+      ) : sortedProducts.length > 0 ? (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+            {sortedProducts.map((product, index) => (
+              <motion.div
+                key={product.id}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-40px' }}
+                transition={{ duration: 0.35, delay: Math.min(index % 4, 3) * 0.04, ease: 'easeOut' }}
               >
-                <div className="aspect-[4/5] bg-[#FAFAF8] border border-[#EAEAEA] mb-4 relative overflow-hidden flex items-center justify-center text-gray-300">
-                  {Boolean(product.originalPrice && product.originalPrice > (product.sellingPrice ?? product.price)) && (
-                    <div className="absolute top-4 right-4 z-10">
-                      <DiscountBadge originalPrice={product.originalPrice} sellingPrice={product.sellingPrice ?? product.price} />
-                    </div>
-                  )}
-                  {product.stockStatus === 'limited' && (
-                    <div 
-                      style={{ color: '#ffffff', backgroundColor: '#6E1F2B' }}
-                      className="absolute top-4 left-4 px-3 py-1 text-[10px] font-bold uppercase tracking-widest z-10"
-                    >
-                      Limited
-                    </div>
-                  )}
-                  {product.stockStatus === 'in_stock' && (
-                    <div 
-                      style={{ color: '#166534', backgroundColor: '#f0fdf4', borderColor: '#bbf7d0', borderWidth: '1px', borderStyle: 'solid' }}
-                      className="absolute top-4 left-4 px-3 py-1 text-[10px] font-bold uppercase tracking-widest z-10"
-                    >
-                      In Stock
-                    </div>
-                  )}
-                  {product.stockStatus === 'out_of_stock' && (
-                    <div 
-                      style={{ color: '#4b5563', backgroundColor: '#f3f4f6', borderColor: '#e5e7eb', borderWidth: '1px', borderStyle: 'solid' }}
-                      className="absolute top-4 left-4 px-3 py-1 text-[10px] font-bold uppercase tracking-widest z-10"
-                    >
-                      Sold Out
-                    </div>
-                  )}
+                <Link 
+                  to={`/product/${product.id}`}
+                  className="group block cursor-pointer"
+                >
+                  <div className="aspect-[4/5] bg-[#FAFAF8] border border-[#EAEAEA] mb-4 relative overflow-hidden flex items-center justify-center text-gray-300">
+                    {Boolean(product.originalPrice && product.originalPrice > (product.sellingPrice ?? product.price)) && (
+                      <div className="absolute top-4 right-4 z-10">
+                        <DiscountBadge originalPrice={product.originalPrice} sellingPrice={product.sellingPrice ?? product.price} />
+                      </div>
+                    )}
+                    {product.stockStatus === 'limited' && (
+                      <div 
+                        style={{ color: '#ffffff', backgroundColor: '#6E1F2B' }}
+                        className="absolute top-4 left-4 px-3 py-1 text-[10px] font-bold uppercase tracking-widest z-10"
+                      >
+                        Limited
+                      </div>
+                    )}
+                    {product.stockStatus === 'in_stock' && (
+                      <div 
+                        style={{ color: '#166534', backgroundColor: '#f0fdf4', borderColor: '#bbf7d0', borderWidth: '1px', borderStyle: 'solid' }}
+                        className="absolute top-4 left-4 px-3 py-1 text-[10px] font-bold uppercase tracking-widest z-10"
+                      >
+                        In Stock
+                      </div>
+                    )}
+                    {product.stockStatus === 'out_of_stock' && (
+                      <div 
+                        style={{ color: '#4b5563', backgroundColor: '#f3f4f6', borderColor: '#e5e7eb', borderWidth: '1px', borderStyle: 'solid' }}
+                        className="absolute top-4 left-4 px-3 py-1 text-[10px] font-bold uppercase tracking-widest z-10"
+                      >
+                        Sold Out
+                      </div>
+                    )}
 
-                  {product.images && product.images[0] ? (
-                    <img 
-                      src={product.images[0]} 
-                      alt={product.name} 
-                      loading="lazy"
-                      decoding="async"
-                      width={400}
-                      height={500}
-                      className="w-full h-full object-contain transition-transform duration-500 ease-out group-hover:scale-[1.06]"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-300 bg-[#FAFAF8]">No Image</div>
-                  )}
-                </div>
-                <div>
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1 mb-1">
-                    <h3 className="text-lg font-medium text-brand-black line-clamp-1">{product.name}</h3>
-                    <PriceDisplay 
-                      sellingPrice={product.sellingPrice ?? product.price} 
-                      originalPrice={product.originalPrice} 
-                      size="sm" 
-                      showDiscountBadge={false}
-                    />
+                    {product.images && product.images[0] ? (
+                      <img 
+                        src={product.images[0]} 
+                        alt={product.name} 
+                        loading="lazy"
+                        decoding="async"
+                        width={400}
+                        height={500}
+                        className="w-full h-full object-contain transition-transform duration-500 ease-out group-hover:scale-[1.06]"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-300 bg-[#FAFAF8]">No Image</div>
+                    )}
                   </div>
-                  <p className="text-xs text-gray-500 mt-1 uppercase tracking-tighter">{product.category} {product.material ? `• ${product.material}` : ''}</p>
-                </div>
-              </Link>
-            </motion.div>
-          ))}
-        </div>
+                  <div>
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1 mb-1">
+                      <h3 className="text-lg font-medium text-brand-black line-clamp-1">{product.name}</h3>
+                      <PriceDisplay 
+                        sellingPrice={product.sellingPrice ?? product.price} 
+                        originalPrice={product.originalPrice} 
+                        size="sm" 
+                        showDiscountBadge={false}
+                      />
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1 uppercase tracking-tighter">{product.category} {product.material ? `• ${product.material}` : ''}</p>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Load More button */}
+          {hasNextPage && (
+            <div className="flex justify-center mt-12">
+              <button
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+                className="px-10 py-3 border border-[#EAEAEA] text-sm font-medium uppercase tracking-wider text-brand-black hover:bg-[#FAFAF8] hover:border-gray-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {isFetchingNextPage ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  'Load More Products'
+                )}
+              </button>
+            </div>
+          )}
+        </>
       ) : (
         <div className="text-center py-20 bg-[#FAFAF8] border border-[#EAEAEA]">
           <img src="/logo.png" alt="Madhumitha Tex Logo" className="w-16 h-16 object-contain mx-auto mb-6 rounded-sm grayscale opacity-50" />

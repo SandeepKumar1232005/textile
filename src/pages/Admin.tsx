@@ -4,14 +4,13 @@ import { Product } from '../types';
 import { supabase } from '../lib/supabase';
 import { queryClient } from '../lib/queryClient';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { Plus, Edit2, Trash2, X, Image as ImageIcon, LogOut, Sparkles } from 'lucide-react';
-import { formatPrice, resizeImageFile } from '../lib/utils';
+import { formatPrice, uploadImageToStorage, deleteImageFromStorage, isBase64Image } from '../lib/utils';
 import { PriceDisplay } from '../components/PriceDisplay';
 
 export function Admin() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
   const navigate = useNavigate();
 
@@ -24,6 +23,22 @@ export function Admin() {
   const [showCategoryMgr, setShowCategoryMgr] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
 
+  // Use React Query for products and categories — prevents double-fetching
+  const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
+    queryKey: ['admin', 'products'],
+    queryFn: getProducts,
+    enabled: !!user,
+  });
+
+  const { data: categories = [], isLoading: categoriesLoading } = useQuery<string[]>({
+    queryKey: ['categories'],
+    queryFn: getCategories,
+    enabled: !!user,
+    staleTime: 5 * 60_000,
+  });
+
+  const isDataLoading = productsLoading || categoriesLoading;
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
@@ -34,7 +49,6 @@ export function Admin() {
         alert('Access denied: Only the owner account can manage products.');
       } else {
         setUser(session.user);
-        loadData();
       }
     });
 
@@ -55,21 +69,12 @@ export function Admin() {
     };
   }, [navigate]);
 
-  async function loadData() {
-    setLoading(true);
-    try {
-      const [productsData, categoriesData] = await Promise.all([
-        getProducts(),
-        getCategories()
-      ]);
-      setProducts(productsData);
-      setCategories(categoriesData);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }
+  /** Invalidate all product/category caches — single source of truth, no double fetch */
+  const invalidateCaches = () => {
+    queryClient.invalidateQueries({ queryKey: ['admin', 'products'] });
+    queryClient.invalidateQueries({ queryKey: ['products'] });
+    queryClient.invalidateQueries({ queryKey: ['categories'] });
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -124,8 +129,7 @@ export function Admin() {
       }
       setIsEditing(false);
       setCurrentProduct(null);
-      await loadData();
-      queryClient.invalidateQueries({ queryKey: ['products'] });
+      invalidateCaches();
       window.scrollTo({ top: 0, behavior: 'smooth' });
       alert('✨ Product saved successfully!');
     } catch (err: any) {
@@ -137,9 +141,17 @@ export function Admin() {
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this product?')) {
       try {
+        // Clean up Storage images before deleting the product
+        const productToDelete = products.find(p => p.id === id);
+        if (productToDelete?.images) {
+          for (const img of productToDelete.images) {
+            if (!isBase64Image(img)) {
+              await deleteImageFromStorage(img);
+            }
+          }
+        }
         await deleteProduct(id);
-        await loadData();
-        queryClient.invalidateQueries({ queryKey: ['products'] });
+        invalidateCaches();
       } catch (err) {
         console.error(err);
         alert('Error deleting product');
@@ -154,8 +166,7 @@ export function Admin() {
     try {
       await createCategory(name);
       setNewCategoryName('');
-      loadData();
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      invalidateCaches();
       alert(`Category "${name}" successfully added!`);
     } catch (err: any) {
       console.error(err);
@@ -167,8 +178,7 @@ export function Admin() {
     if (confirm(`Are you sure you want to delete the category "${name}"? Products in this category will not be deleted but they will no longer show under this category.`)) {
       try {
         await deleteCategory(name);
-        loadData();
-        queryClient.invalidateQueries({ queryKey: ['categories'] });
+        invalidateCaches();
       } catch (err: any) {
         console.error(err);
         alert('Error deleting category: ' + (err.message || err));
@@ -176,6 +186,7 @@ export function Admin() {
     }
   };
 
+  /** Upload image to Supabase Storage instead of converting to base64 */
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     setUploadingImage(true);
@@ -183,15 +194,29 @@ export function Admin() {
       const newImages = [...(currentProduct?.images || [])];
       for (let i = 0; i < e.target.files.length; i++) {
         const file = e.target.files[i];
-        const base64 = await resizeImageFile(file);
-        newImages.push(base64);
+        // Upload to Supabase Storage — returns a public URL (~100 chars) instead of base64 (~200 KB)
+        const publicUrl = await uploadImageToStorage(file);
+        newImages.push(publicUrl);
       }
       setCurrentProduct({ ...currentProduct, images: newImages });
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert('Error processing image');
+      alert('Error uploading image: ' + (err?.message || err));
     } finally {
       setUploadingImage(false);
+    }
+  };
+
+  /** Remove a single image — also deletes from Storage */
+  const handleRemoveImage = async (idx: number) => {
+    const images = [...(currentProduct?.images || [])];
+    const removedUrl = images[idx];
+    images.splice(idx, 1);
+    setCurrentProduct({ ...currentProduct, images });
+
+    // Best-effort cleanup from Storage
+    if (removedUrl && !isBase64Image(removedUrl)) {
+      await deleteImageFromStorage(removedUrl);
     }
   };
 
@@ -200,6 +225,11 @@ export function Admin() {
     const file = e.target.files[0];
     setAiParsing(true);
     try {
+      // Upload the image to Storage first (so we get a URL, not base64 in DB)
+      const publicUrl = await uploadImageToStorage(file);
+
+      // For AI parsing, we still need the base64 to send to Gemini
+      const { resizeImageFile } = await import('../lib/utils');
       const base64Image = await resizeImageFile(file);
       
       const match = base64Image.match(/^data:(image\/[a-zA-Z+.-]+);base64,(.+)$/);
@@ -288,7 +318,8 @@ Return only the raw JSON. Do not write markdown, code blocks (such as \`\`\`json
           material: data.material || prev?.material || '',
           size: data.size || prev?.size || '',
           description: data.description || prev?.description || '',
-          images: [...(prev?.images || []), base64Image]
+          // Use the Storage URL instead of base64
+          images: [...(prev?.images || []), publicUrl]
         };
       });
 
@@ -355,7 +386,7 @@ Return only the raw JSON. Do not write markdown, code blocks (such as \`\`\`json
               </div>
             </div>
 
-            {loading ? (
+            {isDataLoading ? (
               <div className="text-center py-12 text-gray-500">Loading details...</div>
             ) : showCategoryMgr ? (
               <div className="bg-white p-6 md:p-8 rounded-lg border border-gray-200 max-w-2xl">
@@ -419,7 +450,7 @@ Return only the raw JSON. Do not write markdown, code blocks (such as \`\`\`json
                           <td className="p-4">
                             <div className="w-12 h-12 bg-gray-100 rounded overflow-hidden">
                               {p.images && p.images[0] ? (
-                                <img src={p.images[0]} alt="" className="w-full h-full object-cover" />
+                                <img src={p.images[0]} alt="" loading="lazy" className="w-full h-full object-cover" />
                               ) : (
                                 <ImageIcon className="w-6 h-6 text-gray-300 m-auto mt-3" />
                               )}
@@ -681,14 +712,10 @@ Return only the raw JSON. Do not write markdown, code blocks (such as \`\`\`json
                   <div className="flex flex-wrap gap-4 mb-4">
                     {currentProduct?.images?.map((img, idx) => (
                       <div key={idx} className="relative w-24 h-24 rounded border border-gray-200 overflow-hidden group">
-                        <img src={img} alt="" className="w-full h-full object-cover" />
+                        <img src={img} alt="" loading="lazy" className="w-full h-full object-cover" />
                         <button 
                           type="button"
-                          onClick={() => {
-                            const newImages = [...(currentProduct.images || [])];
-                            newImages.splice(idx, 1);
-                            setCurrentProduct({...currentProduct, images: newImages});
-                          }}
+                          onClick={() => handleRemoveImage(idx)}
                           className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                         >
                           <X className="w-3 h-3" />
@@ -697,7 +724,7 @@ Return only the raw JSON. Do not write markdown, code blocks (such as \`\`\`json
                     ))}
                     
                     <label className={`w-24 h-24 rounded border border-dashed flex flex-col items-center justify-center transition-colors ${uploadingImage ? 'border-gray-200 text-gray-300 cursor-not-allowed' : 'border-gray-300 text-gray-400 hover:text-brand-black hover:border-brand-black cursor-pointer'}`}>
-                      {uploadingImage ? <span className="text-xs">Loading...</span> : (
+                      {uploadingImage ? <span className="text-xs">Uploading...</span> : (
                         <>
                           <Plus className="w-6 h-6 mb-1" />
                           <span className="text-xs">Add Image</span>
@@ -706,7 +733,7 @@ Return only the raw JSON. Do not write markdown, code blocks (such as \`\`\`json
                       <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploadingImage} />
                     </label>
                   </div>
-                  <p className="text-xs text-gray-500">Images are automatically resized and compressed for fast loading.</p>
+                  <p className="text-xs text-gray-500">Images are automatically compressed to WebP and uploaded to cloud storage.</p>
                 </div>
               </div>
 
